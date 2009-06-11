@@ -1,0 +1,21 @@
+Build.PL
+Changes
+MANIFEST
+MANIFEST.SKIP
+share/overrides
+share/rules.dh7.noxs
+share/rules.dh7+quilt.xs+noxs
+share/rules.dh7.tiny
+share/rules.dh7.xs
+share/rules.MakeMaker.noxs
+share/rules.MakeMaker.xs
+share/rules.Module-Build.noxs
+share/rules.Module-Build.xs
+TODO
+Makefile.PL
+README
+lib/DhMakePerl.pm
+t/00-load.t
+t/pod-coverage.t
+t/pod.t
+META.yml                                 Module meta-data (added by MakeMaker)
