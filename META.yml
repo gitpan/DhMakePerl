@@ -1,6 +1,6 @@
 ---
 name: DhMakePerl
-version: 0.67
+version: 0.68
 author: []
 abstract: create Debian source package from CPAN dist
 license: gpl
@@ -79,7 +79,7 @@ provides:
     file: lib/Debian/WNPP/Query.pm
   DhMakePerl:
     file: lib/DhMakePerl.pm
-    version: 0.67
+    version: 0.68
   DhMakePerl::Command::Packaging:
     file: lib/DhMakePerl/Command/Packaging.pm
   DhMakePerl::Command::dump_config:
@@ -90,7 +90,6 @@ provides:
     file: lib/DhMakePerl/Command/locate.pm
   DhMakePerl::Command::make:
     file: lib/DhMakePerl/Command/make.pm
-    version: 0.65
   DhMakePerl::Command::refresh:
     file: lib/DhMakePerl/Command/refresh.pm
   DhMakePerl::Command::refresh_cache:
@@ -101,6 +100,12 @@ provides:
     file: lib/DhMakePerl/PodParser.pm
   DhMakePerl::Utils:
     file: lib/DhMakePerl/Utils.pm
+no_index:
+  directory:
+    - privinc
+    - t
+    - xt
+    - share
 generated_by: Module::Build version 0.340201
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html

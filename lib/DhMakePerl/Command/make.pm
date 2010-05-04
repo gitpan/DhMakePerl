@@ -20,15 +20,9 @@ __PACKAGE__->mk_accessors(
 
 =head1 NAME
 
-DhMakePerl - create Debian source package from CPAN dist
-
-=head1 VERSION
-
-Version 0.65
+DhMakePerl::Command::make - implementation of 'dh-make-perl make'
 
 =cut
-
-our $VERSION = '0.65';
 
 =head1 SYNOPSIS
 
@@ -466,8 +460,8 @@ sub package_already_exists {
     }
     else {
         ( my $mod_name = $self->perlname ) =~ s/-/::/g;
-        require Debian::DpkgList;
-        my @found = Debian::DpkgList->scan_perl_mod($mod_name);
+        require Debian::DpkgLists;
+        my @found = Debian::DpkgLists->scan_perl_mod($mod_name);
 
         if (@found) {
             warn "**********\n";
@@ -488,15 +482,21 @@ sub modules_already_packaged {
 
     File::Find::find(
         sub {
-            if ( basename($File::Find::dir)
-                =~ /^(?:\.(?:git|svn|hg|)|CVS|eg|samples?|examples?|t)$/ )
+            if (basename($File::Find::dir)
+                =~ /^(?:
+                    \.(?:git|svn|hg|)
+                    |CVS
+                    |eg|samples?|examples?
+                    |t|xt
+                    |inc|privinc
+                    )$/x
+                )
             {
                 $File::Find::prune = 1;
                 return;
             }
             if (/.+\.pm$/) {
-                my $mi = Module::Build::ModuleInfo->new_from_file(
-                    $File::Find::name);
+                my $mi = Module::Build::ModuleInfo->new_from_file($_);
                 push @modules, $mi->packages_inside;
             }
         },
