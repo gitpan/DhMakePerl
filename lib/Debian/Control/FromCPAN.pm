@@ -31,7 +31,7 @@ use constant oldstable_perl_version => '5.8.8';
 
 =item discover_dependencies( [ { options hash } ] )
 
-Discovers module dependencies and fills the debendency fields in
+Discovers module dependencies and fills the dependency fields in
 F<debian/control> accordingly.
 
 Options:
@@ -149,14 +149,12 @@ sub discover_dependencies {
             }
         }
         else {
-            warn
-                "If you understand the security implications, try --intrusive.\n"
-                if $verbose;
+            if ($verbose) {
+                warn "If you understand the security implications, try --intrusive.\n";
+                warn '=' x 70, "\n";
+            }
+            return;
         }
-        warn '=' x 70, "\n"
-            if $verbose;
-
-        return;
     }
 
     # run-time

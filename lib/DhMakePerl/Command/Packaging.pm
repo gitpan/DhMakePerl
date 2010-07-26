@@ -35,7 +35,7 @@ use Parse::DebianChangelog;
 use Text::Wrap qw(fill);
 use User::pwent;
 
-use constant debstdversion => '3.8.4';
+use constant debstdversion => '3.9.1';
 
 our %DEFAULTS = (
     start_dir => getcwd(),
@@ -195,9 +195,15 @@ sub process_meta {
 sub set_package_name {
     my $self = shift;
 
-    my $pkgname = lc $self->perlname;
-    $pkgname = 'lib' . $pkgname unless $pkgname =~ /^lib/;
-    $pkgname .= '-perl';
+    my $pkgname;
+    if (defined $self->cfg->packagename) {
+      $pkgname = $self->cfg->packagename;
+    }
+    else {
+      $pkgname = lc $self->perlname;
+      $pkgname = 'lib' . $pkgname unless $pkgname =~ /^lib/;
+      $pkgname .= '-perl';
+    }
 
     # ensure policy compliant names and versions (from Joeyh)...
     $pkgname =~ s/[^-.+a-zA-Z0-9]+/-/g;
@@ -308,6 +314,14 @@ sub extract_name_ver {
 
     $name =~ s/::/-/g;
 
+    $name
+        or $ver
+        or die
+        "Unable to determine distribution name and version. Aborting.\n";
+
+    $name or die "Unable to determine distribution name. Aborting.\n";
+    $ver  or die "Unable to determine distribution version. Aborting.\n";
+
     $self->perlname($name);
     $self->version($ver);
 
@@ -409,7 +423,7 @@ sub extract_name_ver_from_makefile {
             (['"]?)                         # Optional quotes
             ([\d_.]+)                       # The actual version.
             \1                              # Optional close-quotes
-            \s*\)?                          # Optional close-parens.
+            \s*\)?                          # Optional close-parenthesis.
         }sx 
     ) {
 
@@ -511,7 +525,7 @@ sub extract_desc {
     }
 
     if ( defined($desc) ) {
-        # Replace linefeeds (not followed by a space) in short description with
+        # Replace linefeed (not followed by a space) in short description with
         # spaces
         $desc =~ s/\n(?=\S)/ /gs;
         $desc =~ s/^\s+//;      # strip leading spaces
@@ -812,22 +826,22 @@ sub create_copyright {
             . " it under the terms of the Artistic License, which comes with Perl.\n"
             . " .\n"
             . " On Debian GNU/Linux systems, the complete text of the Artistic License\n"
-            . " can be found in `/usr/share/common-licenses/Artistic'",
+            . " can be found in `/usr/share/common-licenses/Artistic'.",
         'GPL-1+' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; either version 1, or (at your option)\n"
             . " any later version.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of the GNU General\n"
-            . " Public License can be found in `/usr/share/common-licenses/GPL'",
+            . " On Debian GNU/Linux systems, the complete text of version 1 of the\n"
+            . " General Public License can be found in `/usr/share/common-licenses/GPL-1'.",
         'GPL-2' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 2 dated June, 1991.\n"
             . " .\n"
             . " On Debian GNU/Linux systems, the complete text of version 2 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-2'",
+            . " General Public License can be found in `/usr/share/common-licenses/GPL-2'.",
         'GPL-2+' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
@@ -835,22 +849,22 @@ sub create_copyright {
             . " option) any later version.\n"
             . " .\n"
             . " On Debian GNU/Linux systems, the complete text of version 2 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-2'",
+            . " General Public License can be found in `/usr/share/common-licenses/GPL-2'.",
         'GPL-3' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 3 dated June, 2007.\n"
             . " .\n"
             . " On Debian GNU/Linux systems, the complete text of version 3 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-3'",
+            . " General Public License can be found in `/usr/share/common-licenses/GPL-3'.",
         'GPL-3+' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 3 dated June, 2007, or (at your\n"
-            . " option) any later version\n"
+            . " option) any later version.\n"
             . " .\n"
             . " On Debian GNU/Linux systems, the complete text of version 3 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-3'",
+            . " General Public License can be found in `/usr/share/common-licenses/GPL-3'.",
         'Apache-2.0' =>
             " Licensed under the Apache License, Version 2.0 (the \"License\");\n"
             . " you may not use this file except in compliance with the License.\n"
@@ -863,7 +877,7 @@ sub create_copyright {
             . " limitations under the License.\n"
             . " .\n"
             . " On Debian GNU/Linux systems, the complete text of the Apache License,\n"
-            . " Version 2.0 can be found in `/usr/share/common-licenses/Apache-2.0'",
+            . " Version 2.0 can be found in `/usr/share/common-licenses/Apache-2.0'.",
         'unparsable' =>
             " No known license could be automatically determined for this module.\n"
             . " If this module conforms to a commonly used license, please report this\n"
@@ -939,7 +953,7 @@ sub create_copyright {
     }
 
     # debian/* files information - We default to the module being
-    # licensed as the superset of the module and Perl itself.
+    # licensed as the super-set of the module and Perl itself.
     $licenses{'Artistic'} = $licenses{'GPL-1+'} = 1;
     $year = (localtime)[5] + 1900;
     push( @res, "", "Files: debian/*" );
@@ -1164,12 +1178,16 @@ C<dh --with=quilt> needs debhelper 7.0.8 and quilt 0.46-7.
 
 C<dh --with=bash-completion> needs debhelper 7.0.8 and bash-completion 1:1.0-3.
 
+=item dh --with=perl_dbi
+
+C<dh --with=perl_dbi> needs debhelper 7.0.8 and libdbi-perl 1.612.
+
 =item quilt.make
 
 If F</usr/share/quilt/quilt.make> is included in F<debian/rules>, a
 build-dependency on C<quilt> is added.
 
-=item dhebhelper override targets
+=item debhelper override targets
 
 Targets named C<override_dh_...> are supported by debhelper since 7.0.50
 
@@ -1182,7 +1200,10 @@ L<http://bugs.debian.org/496157>) =back
 
 The proper build-dependency in this case is
 
-    perl (>= 5.10 ) | libmodule-build-perl
+    perl
+
+The unversioned dependency on perl is set as Lenny has already 5.10 which
+includes first Module::Build.
 
 =back
 
@@ -1221,10 +1242,16 @@ sub discover_utility_deps {
         ) if /dh\s+.*--with[= ]quilt/;
 
         $self->explained_dependency(
-            'dh -with=bash-completion',
+            'dh --with=bash-completion',
             $deps,
             'bash-completion (>= 1:1.0-3)'
         ) if (/dh\s+.*--with[= ]bash[-_]completion/);
+
+        $self->explained_dependency(
+            'dh --with=perl_dbi',
+            $deps,
+            'libdbi-perl (>= 1.612)'
+        ) if (/dh\s+.*--with[= ]perl[-_]dbi/);
 
         $self->explained_dependency( 'override_dh_* target',
             $deps, 'debhelper (>= 7.0.50)' )
@@ -1245,16 +1272,23 @@ sub discover_utility_deps {
             'Compatibility Makefile.PL',
             $deps,
             'debhelper (>= 7.0.17)',
-            'perl (>= 5.10) | libmodule-build-perl'
+            'perl'
         ) if $self->makefile_pl_is_MBC;
     }
 
     # there are old packages that still build-depend on libmodule-build-perl
+    # or perl (>= 5.10) | libmodule-build-perl.
     # Since M::B is part of perl 5.10, the build-dependency needs correction
+    # and we replace this Build-Depends with simply perl, as lenny has the 
+    # required version.
+    # Remove perl from Build-Depends-Indep as then perl will be already in
+    # Build-Depends.
     if ( $self->module_build eq 'Module-Build' ) {
+        $deps->remove('perl (>= 5.10) | libmodule-build-perl');
         $deps->remove('libmodule-build-perl');
+        $control->source->Build_Depends_Indep->remove('perl');
         $self->explained_dependency( 'Module::Build', $deps,
-            'perl (>= 5.10) | libmodule-build-perl' );
+            'perl' );
     }
 
     # some mandatory dependencies

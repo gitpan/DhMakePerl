@@ -1,17 +1,76 @@
 ---
-name: DhMakePerl
-version: 0.68
+abstract: 'create Debian source package from CPAN dist'
 author: []
-abstract: create Debian source package from CPAN dist
-license: gpl
-resources:
-  license: http://opensource.org/licenses/gpl-license.php
 build_requires:
   File::Touch: 0
   Test::Deep: 0
   Test::Differences: 0
   Test::Exception: 0
   Test::More: 0
+configure_requires:
+  Module::Build: 0.36
+generated_by: 'Module::Build version 0.3607'
+license: gpl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: DhMakePerl
+no_index:
+  directory:
+    - privinc
+    - t
+    - xt
+    - share
+provides:
+  Debian::AptContents:
+    file: lib/Debian/AptContents.pm
+  Debian::Control:
+    file: lib/Debian/Control.pm
+  Debian::Control::FromCPAN:
+    file: lib/Debian/Control/FromCPAN.pm
+  Debian::Control::Stanza:
+    file: lib/Debian/Control/Stanza.pm
+  Debian::Control::Stanza::Binary:
+    file: lib/Debian/Control/Stanza/Binary.pm
+  Debian::Control::Stanza::CommaSeparated:
+    file: lib/Debian/Control/Stanza/CommaSeparated.pm
+  Debian::Control::Stanza::Source:
+    file: lib/Debian/Control/Stanza/Source.pm
+  Debian::Dependencies:
+    file: lib/Debian/Dependencies.pm
+  Debian::Dependency:
+    file: lib/Debian/Dependency.pm
+  Debian::DpkgLists:
+    file: lib/Debian/DpkgLists.pm
+  Debian::Rules:
+    file: lib/Debian/Rules.pm
+  Debian::WNPP::Bug:
+    file: lib/Debian/WNPP/Bug.pm
+  Debian::WNPP::Query:
+    file: lib/Debian/WNPP/Query.pm
+  DhMakePerl:
+    file: lib/DhMakePerl.pm
+    version: 0.69
+  DhMakePerl::Command::Packaging:
+    file: lib/DhMakePerl/Command/Packaging.pm
+  DhMakePerl::Command::dump_config:
+    file: lib/DhMakePerl/Command/dump_config.pm
+  DhMakePerl::Command::help:
+    file: lib/DhMakePerl/Command/help.pm
+  DhMakePerl::Command::locate:
+    file: lib/DhMakePerl/Command/locate.pm
+  DhMakePerl::Command::make:
+    file: lib/DhMakePerl/Command/make.pm
+  DhMakePerl::Command::refresh:
+    file: lib/DhMakePerl/Command/refresh.pm
+  DhMakePerl::Command::refresh_cache:
+    file: lib/DhMakePerl/Command/refresh_cache.pm
+  DhMakePerl::Config:
+    file: lib/DhMakePerl/Config.pm
+  DhMakePerl::PodParser:
+    file: lib/DhMakePerl/PodParser.pm
+  DhMakePerl::Utils:
+    file: lib/DhMakePerl/Utils.pm
 requires:
   AptPkg::Cache: 0
   AptPkg::Config: 0
@@ -48,65 +107,6 @@ requires:
   YAML: 0
   perl: 5.010
   version: 0
-configure_requires:
-  Module::Build: 0.340201
-provides:
-  Debian::AptContents:
-    file: lib/Debian/AptContents.pm
-  Debian::Control:
-    file: lib/Debian/Control.pm
-  Debian::Control::FromCPAN:
-    file: lib/Debian/Control/FromCPAN.pm
-  Debian::Control::Stanza:
-    file: lib/Debian/Control/Stanza.pm
-  Debian::Control::Stanza::Binary:
-    file: lib/Debian/Control/Stanza/Binary.pm
-  Debian::Control::Stanza::CommaSeparated:
-    file: lib/Debian/Control/Stanza/CommaSeparated.pm
-  Debian::Control::Stanza::Source:
-    file: lib/Debian/Control/Stanza/Source.pm
-  Debian::Dependencies:
-    file: lib/Debian/Dependencies.pm
-  Debian::Dependency:
-    file: lib/Debian/Dependency.pm
-  Debian::DpkgLists:
-    file: lib/Debian/DpkgLists.pm
-  Debian::Rules:
-    file: lib/Debian/Rules.pm
-  Debian::WNPP::Bug:
-    file: lib/Debian/WNPP/Bug.pm
-  Debian::WNPP::Query:
-    file: lib/Debian/WNPP/Query.pm
-  DhMakePerl:
-    file: lib/DhMakePerl.pm
-    version: 0.68
-  DhMakePerl::Command::Packaging:
-    file: lib/DhMakePerl/Command/Packaging.pm
-  DhMakePerl::Command::dump_config:
-    file: lib/DhMakePerl/Command/dump_config.pm
-  DhMakePerl::Command::help:
-    file: lib/DhMakePerl/Command/help.pm
-  DhMakePerl::Command::locate:
-    file: lib/DhMakePerl/Command/locate.pm
-  DhMakePerl::Command::make:
-    file: lib/DhMakePerl/Command/make.pm
-  DhMakePerl::Command::refresh:
-    file: lib/DhMakePerl/Command/refresh.pm
-  DhMakePerl::Command::refresh_cache:
-    file: lib/DhMakePerl/Command/refresh_cache.pm
-  DhMakePerl::Config:
-    file: lib/DhMakePerl/Config.pm
-  DhMakePerl::PodParser:
-    file: lib/DhMakePerl/PodParser.pm
-  DhMakePerl::Utils:
-    file: lib/DhMakePerl/Utils.pm
-no_index:
-  directory:
-    - privinc
-    - t
-    - xt
-    - share
-generated_by: Module::Build version 0.340201
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+resources:
+  license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
+version: 0.69
