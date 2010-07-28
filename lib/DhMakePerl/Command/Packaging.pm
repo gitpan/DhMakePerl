@@ -1128,7 +1128,8 @@ sub discover_dependencies {
 
     if ( my $apt_contents = $self->get_apt_contents ) {
 
-        my $wnpp_query
+        my $wnpp_query;
+        $wnpp_query
             = Debian::WNPP::Query->new(
             { cache_file => catfile( $self->cfg->home_dir, 'wnpp.cache' ) } )
             if $self->cfg->network;
@@ -1181,6 +1182,10 @@ C<dh --with=bash-completion> needs debhelper 7.0.8 and bash-completion 1:1.0-3.
 =item dh --with=perl_dbi
 
 C<dh --with=perl_dbi> needs debhelper 7.0.8 and libdbi-perl 1.612.
+
+=item dh --buildsystem=buildsystem
+
+C<dh --buildsystem=buildsystem> needs debhelper 7.3.7.
 
 =item quilt.make
 
@@ -1263,6 +1268,11 @@ sub discover_utility_deps {
         $self->explained_dependency( 'dh* --max-parallel',
             $deps, 'debhelper (>= 7.4.4)' )
             if /dh.* --max-parallel/;
+
+        # Modular --buildsystem support for debhelper needs 7.3.7.
+        $self->explained_dependency( 'dh* --buildsystem',
+            $deps, 'debhelper (>= 7.3.7)' )
+            if /dh.* --buildsystem/;
     }
 
     if (    -e $self->main_file('Makefile.PL')
