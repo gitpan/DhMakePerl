@@ -50,7 +50,7 @@ provides:
     file: lib/Debian/WNPP/Query.pm
   DhMakePerl:
     file: lib/DhMakePerl.pm
-    version: 0.70
+    version: 0.71
   DhMakePerl::Command::Packaging:
     file: lib/DhMakePerl/Command/Packaging.pm
   DhMakePerl::Command::dump_config:
@@ -97,6 +97,7 @@ requires:
   Module::Depends::Intrusive: 0
   Parse::DebControl: 0
   Parse::DebianChangelog: 0
+  Software::License::Artistic_2_0: 0
   Storable: 0
   Text::Diff: 0
   Text::Wrap: 0
@@ -109,4 +110,4 @@ requires:
   version: 0
 resources:
   license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
-version: 0.70
+version: 0.71

@@ -398,7 +398,7 @@ sub extract_name_ver_from_makefile {
         $ver = $self->cfg->version;
 
     }
-    elsif ( $file =~ /([\'\"]?)VERSION\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s ) {
+    elsif ( $file =~ /([\'\"]?)\bVERSION\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s ) {
 
         # Regular MakeMaker
         $ver = $4;
@@ -570,7 +570,7 @@ sub check_for_xs {
     # we need the relative path here. Otherwise the check will give bogus
     # results if the working dir matches the pattern
     my $rel_path = substr( $File::Find::name, length( $self->main_dir ) );
-    ( $rel_path !~ m{/(?:examples?|samples|eg|t|docs?)/} )
+    ( $rel_path !~ m{/(?:examples?|samples|eg|t|docs|win32?)/} )
             and
     ( !$self->cfg->exclude or $rel_path !~ $self->cfg->exclude )
         && /\.(xs|c|cpp|cxx)$/i
@@ -825,46 +825,56 @@ sub create_copyright {
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the Artistic License, which comes with Perl.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of the Artistic License\n"
-            . " can be found in `/usr/share/common-licenses/Artistic'.",
+            . " On Debian systems, the complete text of the Artistic License can be\n"
+            . " found in `/usr/share/common-licenses/Artistic'.",
+        'Artistic-2.0' => do {
+            require Software::License::Artistic_2_0;
+            my $artistic2 = Software::License::Artistic_2_0->new(
+                { holder => 'noname', } );
+            my $text = $artistic2->license;
+            $text =~ s/\n$//s;
+            $text =~ s/^\n/.\n/mg;
+            $text =~ s/^/ /mg;
+            $text;
+            },
         'GPL-1+' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; either version 1, or (at your option)\n"
             . " any later version.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of version 1 of the\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-1'.",
+            . " On Debian systems, the complete text of version 1 of the GNU General\n"
+            . " Public License can be found in `/usr/share/common-licenses/GPL-1'.",
         'GPL-2' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 2 dated June, 1991.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of version 2 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-2'.",
+            . " On Debian systems, the complete text of version 2 of the GNU General\n"
+            . " Public License can be found in `/usr/share/common-licenses/GPL-2'.",
         'GPL-2+' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 2 dated June, 1991, or (at your\n"
             . " option) any later version.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of version 2 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-2'.",
+            . " On Debian systems, the complete text of version 2 of the GNU General\n"
+            . " Public License can be found in `/usr/share/common-licenses/GPL-2'.",
         'GPL-3' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 3 dated June, 2007.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of version 3 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-3'.",
+            . " On Debian systems, the complete text of version 3 of the GNU General\n"
+            . " Public License can be found in `/usr/share/common-licenses/GPL-3'.",
         'GPL-3+' =>
             " This program is free software; you can redistribute it and/or modify\n"
             . " it under the terms of the GNU General Public License as published by\n"
             . " the Free Software Foundation; version 3 dated June, 2007, or (at your\n"
             . " option) any later version.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of version 3 of the GNU\n"
-            . " General Public License can be found in `/usr/share/common-licenses/GPL-3'.",
+            . " On Debian systems, the complete text of version 3 of the GNU General\n"
+            . " Public License can be found in `/usr/share/common-licenses/GPL-3'.",
         'Apache-2.0' =>
             " Licensed under the Apache License, Version 2.0 (the \"License\");\n"
             . " you may not use this file except in compliance with the License.\n"
@@ -876,7 +886,7 @@ sub create_copyright {
             . " See the License for the specific language governing permissions and\n"
             . " limitations under the License.\n"
             . " .\n"
-            . " On Debian GNU/Linux systems, the complete text of the Apache License,\n"
+            . " On Debian systems, the complete text of the Apache License,\n"
             . " Version 2.0 can be found in `/usr/share/common-licenses/Apache-2.0'.",
         'unparsable' =>
             " No known license could be automatically determined for this module.\n"
@@ -926,7 +936,10 @@ sub create_copyright {
                 }
             }
 
-            if ( $mangle_cprt =~ /Artistic\s*License/is ) {
+            if ( $mangle_cprt =~ /Artistic\s*License\s*2\.0/is ) {
+                $licenses{'Artistic-2.0'} = 1;
+            }
+            elsif ( $mangle_cprt =~ /Artistic\s*License/is ) {
                 $licenses{'Artistic'} = 1;
             }
 
