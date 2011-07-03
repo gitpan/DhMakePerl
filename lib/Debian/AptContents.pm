@@ -42,7 +42,7 @@ use AptPkg::Config;
 
 $AptPkg::Config::_config->init();
 
-our $oldstable_perl = '5.8.8';
+our $oldstable_perl = '5.10.0';
 
 =head1 CONSTRUCTOR
 
@@ -319,7 +319,9 @@ sub read_cache {
                         | perl/(?:\d[\d.]+)/   # or perl/5.10/
                         )
                     }{}x;
-                    $cache->{apt_contents}{$file} = $packages;
+                    $cache->{apt_contents}{$file} = exists $cache->{apt_contents}{$file}
+                        ? $cache->{apt_contents}{$file}.','.$packages
+                        : $packages;
 
                     # $packages is a comma-separated list of
                     # section/package items. We'll parse it when a file
@@ -366,7 +368,7 @@ sub store_cache {
             or die "Error creating directory '$dir': $!\n";
     }
 
-    Storable::store( $self->cache, $self->cache_file . '-new' );
+    Storable::nstore( $self->cache, $self->cache_file . '-new' );
     rename( $self->cache_file . '-new', $self->cache_file );
 }
 
@@ -396,7 +398,7 @@ sub find_file_packages {
                                                # otherwise it won't strip enough off Ubuntu's
                                                # usr/share/perl5/Config/Any.pm  universe/perl/libconfig-any-perl
 
-    return @packages;
+    return uniq @packages;
 }
 
 =item find_perl_module_package( $module, $version )

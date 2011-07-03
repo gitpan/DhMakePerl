@@ -33,7 +33,7 @@ use constant options => (
     'packagename|p=s', 'pkg-perl!',
     'recursive!',
     'requiredeps',     'sources-list=s',
-    'source-format=s',
+    'source-format=s', 'vcs=s',
     'verbose!',        'version=s',
 );
 
@@ -64,7 +64,7 @@ use constant DEFAULTS => {
     backups       => 1,
     data_dir      => '/usr/share/dh-make-perl',
     dbflags       => ( $> == 0 ? "" : "-rfakeroot" ),
-    dh            => 7,
+    dh            => 8,
     dist          => '',
     email         => '',
     exclude       => qr/$Dpkg::Source::Package::diff_ignore_default_regexp/,
@@ -72,6 +72,7 @@ use constant DEFAULTS => {
     network       => 1,
     only          => [ 'control', 'copyright', 'docs', 'examples', 'rules' ],
     source_format => '1.0',
+    vcs           => 'svn',
     verbose       => 1,
 };
 

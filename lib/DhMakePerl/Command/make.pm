@@ -95,13 +95,14 @@ sub execute {
     $bin->short_description( $self->cfg->desc )
         if $self->cfg->desc;
 
-    move(
-        $tarball,
-        sprintf(
-            "%s/%s_%s.orig.tar.gz",
-            dirname($tarball), $self->pkgname, $self->version
-        )
-    ) if ( $tarball && $tarball =~ /(?:\.tar\.gz|\.tgz)$/ );
+    if ( $tarball and $tarball =~ /(?:\.tar\.gz|\.tgz)$/ ) {
+        my $dest = sprintf( "%s/%s_%s.orig.tar.gz",
+            dirname($tarball), $self->pkgname, $self->version );
+
+        move( $tarball, $dest ) or die "move($tarball, $dest): $!";
+
+        $tarball = $dest;
+    }
 
     if ( -d $self->debian_dir ) {
         $self->warning( $self->debian_dir . ' already exists' );
@@ -161,14 +162,30 @@ sub execute {
     $src->Standards_Version( $self->debstdversion );
     $src->Homepage( $self->upsurl );
     if ( $self->cfg->pkg_perl ) {
-        $self->control->source->Vcs_Svn(
-            sprintf( "svn://svn.debian.org/pkg-perl/trunk/%s/",
-                $self->pkgname )
-        );
-        $self->control->source->Vcs_Browser(
-            sprintf( "http://svn.debian.org/viewsvn/pkg-perl/trunk/%s/",
-                $self->pkgname )
-        );
+        my $vcs = lc( $self->cfg->vcs );
+        if ( $vcs eq 'svn' ) {
+            $self->control->source->Vcs_Svn(
+                sprintf( "svn://svn.debian.org/pkg-perl/trunk/%s/",
+                    $self->pkgname )
+            );
+            $self->control->source->Vcs_Browser(
+                sprintf( "http://svn.debian.org/viewsvn/pkg-perl/trunk/%s/",
+                    $self->pkgname )
+            );
+        }
+        elsif ( $vcs eq 'git' ) {
+            $self->control->source->Vcs_Git(
+                sprintf( "git://git.debian.org/git/pkg-perl/packages/%s.git",
+                    $self->pkgname )
+            );
+            $self->control->source->Vcs_Browser(
+                sprintf( "http://git.debian.org/git/pkg-perl/packages/%s.git",
+                    $self->pkgname )
+            );
+        }
+        else {
+            warn "Version control system '$vcs' not known. Please submit a patch :)\n";
+        }
     }
     $self->control->write( $self->debian_file('control') );
 
@@ -182,6 +199,10 @@ sub execute {
         if $self->cfg->build or $self->cfg->install;
     $self->install_package if $self->cfg->install;
     print "--- Done\n" if $self->cfg->verbose;
+
+    $self->setup_git_repository($tarball)
+        if $self->cfg->{pkg_perl}
+            and $self->cfg->{vcs} eq 'git';
 
     $self->package_already_exists($apt_contents) 
         or $self->modules_already_packaged($apt_contents);
@@ -254,13 +275,16 @@ sub setup_dir {
                 . "' module or distribution on CPAN\n";
         }
 
-        $tarball = $CPAN::Config->{'keep_source_where'} . "/authors/id/";
-
         $dist->get || die "Cannot get ", $dist->pretty_id, "\n"; # <- here $ENV{'PWD'} gets set to $HOME/.cpan/build
+        $dist->pretty_id =~ /^(.)(.)/;
+        $tarball = $CPAN::Config->{'keep_source_where'} . "/authors/id/$1/$1$2/";
+        # the file is under authors/id/A/AU/AUTHOR directory
+        # how silly there is no $dist->filename method
+
         $tarball .= $dist->pretty_id;
         $self->main_dir( $dist->dir );
 
-        copy( $tarball, $orig_pwd );
+        copy( $tarball, $orig_pwd ) or die "copy($tarball, $orig_pwd): $!";
         $tarball = $orig_pwd . "/" . basename($tarball);
 
         # build_dir contains a random part since 1.88_59
@@ -562,6 +586,43 @@ EOF
     return $found ? 1 : 0;
 }
 
+sub setup_git_repository {
+    my ( $self, $tarball ) = @_;
+
+    require Git;
+    require IO::Dir;
+
+    Git::command( 'init', $self->main_dir );
+
+    my $git = Git->repository( $self->main_dir );
+    $git->command( qw(symbolic-ref HEAD refs/heads/upstream) );
+    my @upstream_files;
+    my $dh = IO::Dir->new( $self->main_dir );
+    while ( defined( my $f = $dh->read ) ) {
+        next if $f eq '.' or $f eq '..';
+        next if $f eq 'debian';
+        push @upstream_files, $f;
+    }
+    $git->command( 'add', @upstream_files );
+    $git->command( 'commit', '-m',
+              "Import original source of "
+            . $self->perlname . ' '
+            . $self->version );
+    $git->command( 'tag', "upstream/".$self->version, 'upstream' );
+    $git->command( qw( checkout -b master upstream ) );
+    $git->command( 'add', 'debian' );
+    $git->command( 'commit', '-m', 'Initial packaging by dh-make-perl' );
+    $git->command(
+        qw( remote add origin ),
+        sprintf( "ssh://git.debian.org/git/pkg-perl/packages/%s.git",
+            $self->pkgname ),
+    );
+
+    $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
+    system( 'pristine-tar', 'commit', $tarball ) >= 0
+        or warn "error running pristine-tar: $!\n";
+}
+
 =item warning I<string> ...
 
 In verbose mode, prints supplied arguments on STDERR, prepended with C<W: > and
@@ -628,7 +689,7 @@ L<http://bugs.debian.org/dh-make-perl>
 
 =item Copyright (C) 2007-2010 Gregor Herrmann <gregoa@debian.org>
 
-=item Copyright (C) 2007-2010 Damyan Ivanov <dmn@debian.org>
+=item Copyright (C) 2007,2008,2009,2010,2011 Damyan Ivanov <dmn@debian.org>
 
 =item Copyright (C) 2008, Roberto C. Sanchez <roberto@connexer.com>
 

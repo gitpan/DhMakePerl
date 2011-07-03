@@ -29,6 +29,7 @@ lib/DhMakePerl/Utils.pm
 Makefile
 MANIFEST			This list of files
 MANIFEST.SKIP
+META.json
 privinc/My/Builder.pm
 README
 share/rules.dh7+quilt.xs+noxs

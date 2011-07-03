@@ -1,10 +1,10 @@
 Source: libstrange-perl
 Section: perl
 Priority: optional
-Build-Depends: debhelper (>= 7),
- perl
 Maintainer: Florian Geekwurt <florian@geekwurt.org>
-Standards-Version: 3.9.1
+Build-Depends: debhelper (>= 8),
+ perl
+Standards-Version: 3.9.2
 Homepage: http://search.cpan.org/dist/Strange/
 
 Package: libstrange-perl
