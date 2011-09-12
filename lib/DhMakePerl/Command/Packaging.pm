@@ -725,7 +725,7 @@ sub check_for_xs {
     # we need the relative path here. Otherwise the check will give bogus
     # results if the working dir matches the pattern
     my $rel_path = substr( $File::Find::name, length( $self->main_dir ) );
-    ( $rel_path !~ m{/(?:examples?|samples|eg|t|docs|win32?)/} )
+    ( $rel_path !~ m{/(?:examples?|samples|eg|t|docs|win32?|demos?)/} )
             and
     ( !$self->cfg->exclude or $rel_path !~ $self->cfg->exclude )
         && /\.(xs|c|cpp|cxx)$/i
@@ -933,7 +933,7 @@ sub create_copyright {
     $cprt_author =~ s/\n/\n    /gs;
     $cprt_author =~ s/^\s*$/    ./gm;
 
-    push @res, "Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135";
+    push @res, "Format-Specification: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?view=markup&pathrev=135";
 
     # Header section
     %fields = (

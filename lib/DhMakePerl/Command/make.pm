@@ -169,17 +169,17 @@ sub execute {
                     $self->pkgname )
             );
             $self->control->source->Vcs_Browser(
-                sprintf( "http://svn.debian.org/viewsvn/pkg-perl/trunk/%s/",
+                sprintf( "http://anonscm.debian.org/viewvc/pkg-perl/trunk/%s/",
                     $self->pkgname )
             );
         }
         elsif ( $vcs eq 'git' ) {
             $self->control->source->Vcs_Git(
-                sprintf( "git://git.debian.org/git/pkg-perl/packages/%s.git",
+                sprintf( "git://git.debian.org/pkg-perl/packages/%s.git",
                     $self->pkgname )
             );
             $self->control->source->Vcs_Browser(
-                sprintf( "http://git.debian.org/git/pkg-perl/packages/%s.git",
+                sprintf( "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/%s.git",
                     $self->pkgname )
             );
         }
@@ -596,14 +596,8 @@ sub setup_git_repository {
 
     my $git = Git->repository( $self->main_dir );
     $git->command( qw(symbolic-ref HEAD refs/heads/upstream) );
-    my @upstream_files;
-    my $dh = IO::Dir->new( $self->main_dir );
-    while ( defined( my $f = $dh->read ) ) {
-        next if $f eq '.' or $f eq '..';
-        next if $f eq 'debian';
-        push @upstream_files, $f;
-    }
-    $git->command( 'add', @upstream_files );
+    $git->command( 'add', $self->main_dir );
+    $git->command( 'rm', '--cached', '-r', $self->debian_dir );
     $git->command( 'commit', '-m',
               "Import original source of "
             . $self->perlname . ' '
@@ -619,7 +613,7 @@ sub setup_git_repository {
     );
 
     $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
-    system( 'pristine-tar', 'commit', $tarball ) >= 0
+    system( 'pristine-tar', 'commit', $tarball, "upstream/".$self->version ) >= 0
         or warn "error running pristine-tar: $!\n";
 }
 

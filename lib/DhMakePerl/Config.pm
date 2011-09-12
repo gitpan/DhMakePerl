@@ -71,8 +71,8 @@ use constant DEFAULTS => {
     home_dir      => "$ENV{HOME}/.dh-make-perl",
     network       => 1,
     only          => [ 'control', 'copyright', 'docs', 'examples', 'rules' ],
-    source_format => '1.0',
-    vcs           => 'svn',
+    source_format => '3.0 (quilt)',
+    vcs           => 'git',
     verbose       => 1,
 };
 

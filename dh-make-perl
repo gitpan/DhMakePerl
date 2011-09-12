@@ -98,7 +98,7 @@ instead of C<Debbie Devlin E<lt>debbie@devlin.orgE<gt>>.
 
 =item B<--only> | B<-o> I<control|copyright|docs|examples|rules>
 
-This option allows to update only one or more file(s) in the debian/
+This option allows one to update only one or more file(s) in the debian/
 directory when B<dh-make-perl> is run in L</refresh> mode. Filenames are
 separated by a comma. The option can be given multiple times, accumulating
 arguments.
@@ -326,7 +326,7 @@ F<debian/control> accordingly.
 Valid only in L</make> mode with L</--cpan> or I<directory> arguments. Causes
 dh-make-perl to try to create packaging (and possibly build and install the
 packages if L</--build> and L</--install> options are also given) for any
-dependencies which are missiing packages.
+dependencies which are missing packages.
 
 This works like this: when the 'main' package is constructed, any missing
 packages are put in a list, and then the debianisaion procedure is run in turn
@@ -340,7 +340,7 @@ requires the apt-file package installed and updated)
 =item B<--source-format> I<format>
 
 When creating or refreshing packaging, use the specified source format.
-Defaults to C<1.0>.
+Defaults to C<3.0 (quilt)>.
 
 =item B<--sources-list> I<FILE>
 
@@ -465,6 +465,8 @@ Patches from:
 
 =item Amos Shapira E<lt>amos.shapira@gmail.comE<gt>
 
+=item Ansgar Burchardt E<lt>ansgar@debian.orgE<gt>
+
 =item Christian Kurz E<lt>shorty@debian.orgE<gt>
 
 =item Damyan Ivanov E<lt>divanov@creditreform.bgE<gt>
@@ -505,6 +507,8 @@ Patches from:
 
 =item Paul Fenwick E<lt>pjf@perltraining.com.auE<gt>
 
+=item Peter Flanigan E<lt>Support@RoxSoft.co.ukE<gt>
+
 =item Peter Moerch E<lt>mn3k66i02@sneakemail.comE<gt>
 
 =item Peter Pentchev E<lt>roam@ringlet.netE<gt>
@@ -514,6 +518,8 @@ Patches from:
 =item Salvatore Bonaccorso E<lt>carnil@debian.orgE<gt>
 
 =item Stephen Oberholtzer E<lt>oliverklozoff@gmail.comE<gt>
+
+=item Tim Retout E<lt>diocles@debian.orgE<gt>
 
 =item Ton Nijkes E<lt>tonn@wau.mis.ah.nlE<gt>
 
