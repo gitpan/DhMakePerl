@@ -2,6 +2,7 @@ Build.PL
 Changes
 COPYING
 dh-make-perl
+HOWTO.release
 lib/Debian/AptContents.pm
 lib/Debian/Control.pm
 lib/Debian/Control/FromCPAN.pm
@@ -30,7 +31,6 @@ libimager-qrcode-perl_0.033.orig.tar.gz
 Makefile
 MANIFEST			This list of files
 MANIFEST.SKIP
-META.json
 privinc/My/Builder.pm
 README
 share/rules.dh7+quilt.xs+noxs
@@ -44,7 +44,6 @@ t/CommaSeparated.t
 t/contents/sources.list
 t/contents/test_debian_dists_sid_main_Contents
 t/contents/test_debian_dists_testing_main_Contents
-t/contents/wnpp.cache
 t/Control.t
 t/core-modules.t
 t/corelist.t
@@ -139,3 +138,4 @@ t/split_version_relation.t
 TODO
 xt/pod-spelling.t
 META.yml
+META.json

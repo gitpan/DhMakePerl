@@ -195,17 +195,8 @@ sub execute {
     #create_readme("$debiandir/README.Debian");
     $self->create_copyright( $self->debian_file('copyright') );
     $self->update_file_list( docs => $self->docs, examples => $self->examples );
-    $self->build_package
-        if $self->cfg->build or $self->cfg->install;
-    $self->install_package if $self->cfg->install;
-    print "--- Done\n" if $self->cfg->verbose;
 
-    $self->setup_git_repository($tarball)
-        if $self->cfg->{pkg_perl}
-            and $self->cfg->{vcs} eq 'git';
 
-    $self->package_already_exists($apt_contents) 
-        or $self->modules_already_packaged($apt_contents);
 
     if ( $self->cfg->recursive ) {
         $already_done //= {};
@@ -229,6 +220,17 @@ sub execute {
             $maker->execute($already_done)
         }
     }
+
+    $self->build_package
+        if $self->cfg->build or $self->cfg->install;
+    $self->install_package if $self->cfg->install;
+    print "--- Done\n" if $self->cfg->verbose;
+
+    $self->setup_git_repository($tarball)
+        if $self->cfg->{vcs} eq 'git';
+
+    $self->package_already_exists($apt_contents) 
+        or $self->modules_already_packaged($apt_contents);
 
     return(0);
 }
@@ -276,6 +278,7 @@ sub setup_dir {
         }
 
         $dist->get || die "Cannot get ", $dist->pretty_id, "\n"; # <- here $ENV{'PWD'} gets set to $HOME/.cpan/build
+        chdir $orig_pwd;                                         # so set it back
         $dist->pretty_id =~ /^(.)(.)/;
         $tarball = $CPAN::Config->{'keep_source_where'} . "/authors/id/$1/$1$2/";
         # the file is under authors/id/A/AU/AUTHOR directory
@@ -346,12 +349,14 @@ sub install_package {
 
     my ( $archspec, $debname );
 
-    if ( $self->arch eq 'any' ) {
+    my $arch = $self->control->binary->Values(0)->Architecture;
+
+    if ( !defined $arch || $arch eq 'any' ) {
         $archspec = `dpkg --print-architecture`;
         chomp($archspec);
     }
     else {
-        $archspec = $self->arch;
+        $archspec = $arch;
     }
 
     $debname = sprintf( "%s_%s-1_%s.deb", $self->pkgname, $self->version,
@@ -591,6 +596,7 @@ sub setup_git_repository {
 
     require Git;
     require IO::Dir;
+    require File::Which;
 
     Git::command( 'init', $self->main_dir );
 
@@ -610,11 +616,20 @@ sub setup_git_repository {
         qw( remote add origin ),
         sprintf( "ssh://git.debian.org/git/pkg-perl/packages/%s.git",
             $self->pkgname ),
-    );
+    ) if $self->cfg->pkg_perl;
 
-    $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
-    system( 'pristine-tar', 'commit', $tarball, "upstream/".$self->version ) >= 0
-        or warn "error running pristine-tar: $!\n";
+    if ( File::Which::which('pristine-tar') ) {
+        $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
+        system( 'pristine-tar', 'commit', $tarball, "upstream/".$self->version ) >= 0
+            or warn "error running pristine-tar: $!\n";
+    }
+    else {
+        warn "W: pristine-tar not available. Please run\n";
+        warn "W:     apt-get install pristine-tar\n";
+        warn "W:  followed by\n";
+        warn "W:     pristine-tar commit $tarball upstream/"
+            . $self->version . "\n";
+    }
 }
 
 =item warning I<string> ...

@@ -40,10 +40,10 @@ a debian source package out of a Perl module or CPAN distribution.
 This works for most simple packages and is also useful
 for getting started with packaging Perl modules.
 
-You can specify a module or distribution name with the L<--cpan|/cpan_module>
+You can specify a module or distribution name with the L<--cpan>
 switch and B<dh-make-perl> will download it for you from a CPAN mirror, or you
 can specify the directory with the already unpacked sources. If neither
-L<--cpan|/cpan_module> nor a directory is given as argument, B<dh-make-perl>
+L<--cpan> nor a directory is given as argument, B<dh-make-perl>
 tries to create a Perl package from the data in the current directory.
 
 You can build and install the debian package using the L</--build>
@@ -250,12 +250,12 @@ Uses the argument to --desc as short description for the package.
 
 =item B<--dh> I<VERSION>
 
-Set desired debhelper version. If C<ver> is 7, generated debian/rules is
+Set desired debhelper version. If C<ver> is >=7, generated debian/rules is
 minimalistic, using the auto-mode of debhelper. Also, any additional
 documentation and examples are listed in additional files under debian/,
 instead of being listed in debian/rules.
 
-Since version 0.60, B<7> is the only supported debhelper compatibility level.
+Since version 0.60, B<dh-make-perl> only supports debhelper compatibility levels B<>=7>.
 
 =item B<--dist> I<DISTRIBUTION>
 
@@ -318,8 +318,9 @@ name.
 Useful when preparing a package for the Debian Perl Group
 L<http://pkg-perl.alioth.debian.org>.
 
-Sets C<Maintainer>, C<Uploaders>, C<Vcs-Svn> and C<Vcs-Browser> fields in
-F<debian/control> accordingly.
+Sets C<Maintainer>, C<Uploaders>, C<Vcs-Git> and C<Vcs-Browser> fields in
+F<debian/control> accordingly. Also, when C<--vcs git> is used (the default),
+sets up a Git remote pointing to the right place on I<git.debian.org>.
 
 =item B<--recursive>
 
@@ -354,7 +355,7 @@ Default: apt's default.
 =item B<--vcs> I<VCS>
 
 In B<--pkg-perl> mode, use the specified version control system in the
-generated I<Vcs-*> fields. The default is C<svn> (still).
+generated I<Vcs-*> fields. The default is C<git>.
 
 If I<VCS> is C<git>, C<dh-make-perl> will setup a Git repository with three
 branches:
@@ -372,11 +373,12 @@ contents of the C<debian/> directory added.
 
 =item pristine-tar
 
-A pranch to keep L<pristine-tar(1)> data.
+A branch to keep L<pristine-tar(1)> data.
 
 =back
 
-Also, an C<origin> remote is added pointing to the repository on I<git.debian.org>.
+If B<--pkg-perl> is also given, an C<origin> remote is added pointing to the
+repository on I<git.debian.org>.
 
 =item B<--verbose> | B<--no-verbose>
 
@@ -474,6 +476,8 @@ Patches from:
 =item David Paleino E<lt>d.paleino@gmail.comE<gt>
 
 =item David Pashley E<lt>david@davidpashley.comE<gt>
+
+=item Dima Kogan E<lt>dima@secretsauce.netE<gt>
 
 =item Edward Betts E<lt>edward@debian.orgE<gt>
 

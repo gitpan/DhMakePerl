@@ -46,12 +46,13 @@ sub compare_tree {
 
                         # different copyright years are normal
                         # (test written in 2002 and run in 2020
+                        # after refreshing there can also be several years
                         if ($hint eq 'email') {
                             return 0
                              if $a
-                                 =~ /^Copyright: \d+, Florian Geekwurt <florian\@\.geekwort\.org>$/
+                                 =~ /^Copyright: (\d+, )+Florian Geekwurt <florian\@geekwurt\.org>$/
                                  and $b
-                                 =~ /^Copyright: \d+, Florian Geekwurt <florian\@\.geekwort\.org>$/;
+                                 =~ /^Copyright: (\d+, )+Florian Geekwurt <florian\@geekwurt\.org>$/;
                             return 0
                              if $a
                                  =~ /^ \d+, Joe Maintainer <joe\@debian\.org>$/
@@ -92,6 +93,7 @@ sub dist_ok($) {
             "--apt-contents-dir", "$Bin/contents",
             "--data-dir", "$Bin/../share",
             $ENV{NO_NETWORK} ? '--no-network' : (),
+            "--vcs", "none",
             "--sources-list",
             "$Bin/contents/sources.list", "--email", "joemaint\@test.local",
             $dist );
@@ -105,6 +107,7 @@ sub dist_ok($) {
             "--apt-contents-dir", "$Bin/contents",
             "--data-dir", "$Bin/../share",
             $ENV{NO_NETWORK} ? '--no-network' : (),
+            "--vcs", "none",
             "--sources-list",
             "$Bin/contents/sources.list", "--email", "joemaint\@test.local",
             "refresh",
@@ -121,6 +124,7 @@ sub dist_ok($) {
             "--apt-contents-dir", "$Bin/contents",
             "--data-dir", "$Bin/../share",
             $ENV{NO_NETWORK} ? '--no-network' : (),
+            "--vcs", "none",
             "--sources-list",
             "$Bin/contents/sources.list", "--email", "joemaint\@test.local",
             "refresh", '--source-format', '3.0 (quilt)',
@@ -145,6 +149,7 @@ sub dist_ok($) {
             "--apt-contents-dir", "$Bin/contents",
             "--data-dir", "$Bin/../share",
             $ENV{NO_NETWORK} ? '--no-network' : (),
+            "--vcs", "none",
             "--sources-list",
             "$Bin/contents/sources.list",
             "refresh",

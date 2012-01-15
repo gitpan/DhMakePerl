@@ -10,6 +10,7 @@ my $builder = My::Builder->new(
         'Git'     => 0,
         'IO::Dir' => 0,
     },
+    configure_requires => { 'Module::Build' => 0.38 },
     requires            => {
         perl    => '5.010',
 
@@ -29,6 +30,7 @@ my $builder = My::Builder->new(
         'File::Find::Rule'          => 0,
         'File::Spec'                => 0,
         'File::Spec::Functions'     => 0,
+        'File::Which'               => 0,
         'FindBin'                   => 0,
         'Getopt::Long'              => 0,
         'IO::File'                  => 0,
@@ -67,6 +69,12 @@ my $builder = My::Builder->new(
         share   => '/usr/share/dh-make-perl',
     },
     share_files         => { map( ( $_ => $_ ), glob 'share/*' ) },
+    meta_merge => {
+        resources => {
+            repository => 'http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git',
+        },
+        keywords => [ qw(debian package helper) ],
+    },
 );
 
 $builder->add_build_element('share');

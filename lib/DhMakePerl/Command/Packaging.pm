@@ -410,16 +410,16 @@ sub extract_name_ver_from_build {
         $ver = $self->cfg->version;
 
     }
-    elsif ( $file =~ /([\'\"]?)\sdist_version\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s ) {
+    elsif ( $file =~ /([\'\"]?)\sdist_version\1\s*(=>|,)\s*([\'\"]?)([^\s,]*)\3/s ) {
         $ver = $4;
 
         # Where is the version taken from?
         $vfrom = $4
             if $file
-                =~ /([\'\"]?)dist_version_from\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s;
+                =~ /([\'\"]?)dist_version_from\1\s*(=>|,)\s*([\'\"]?)([^\s,]*)\3/s;
 
     }
-    elsif ( $file =~ /([\'\"]?)dist_version_from\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s )
+    elsif ( $file =~ /([\'\"]?)dist_version_from\1\s*(=>|,)\s*([\'\"]?)([^\s,]*)\3/s )
     {
         $vfrom = $4;
 
@@ -553,7 +553,7 @@ sub extract_name_ver_from_makefile {
         $ver = $self->cfg->version;
 
     }
-    elsif ( $file =~ /([\'\"]?)\bVERSION\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s ) {
+    elsif ( $file =~ /([\'\"]?)\bVERSION\1\s*(=>|,)\s*([\'\"]?)([^\s,]*)\3/s ) {
 
         # Regular MakeMaker
         $ver = $4;
@@ -561,10 +561,10 @@ sub extract_name_ver_from_makefile {
         # Where is the version taken from?
         $vfrom = $4
             if $file
-                =~ /([\'\"]?)VERSION_FROM\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s;
+                =~ /([\'\"]?)VERSION_FROM\1\s*(=>|,)\s*([\'\"]?)([^\s,]*)\3/s;
 
     }
-    elsif ( $file =~ /([\'\"]?)VERSION_FROM\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s )
+    elsif ( $file =~ /([\'\"]?)VERSION_FROM\1\s*(=>|,)\s*([\'\"]?)([^\s,]*)\3/s )
     {
 
         # Regular MakeMaker pointing to where the version is taken from
@@ -1311,7 +1311,8 @@ sub configure_cpan {
 
     return if $CPAN::Config_loaded;
 
-    CPAN::HandleConfig->load( be_silent => not $self->cfg->verbose );
+    CPAN::HandleConfig->load( be_silent => not $self->cfg->verbose )
+        if $self->cfg->network;
 
     unshift( @{ $CPAN::Config->{'urllist'} }, $self->cfg->cpan_mirror )
         if $self->cfg->cpan_mirror;
@@ -1356,8 +1357,8 @@ sub discover_dependencies {
     }
     else {
         warn "No APT contents can be loaded.\n";
-        warn "Please install 'apt-file' package and run 'apt-file update'\n";
-        warn "as root.\n";
+        warn "Please install 'apt-file' package (at least version 2.5.0) and\n";
+        warn "run 'apt-file update' as root.\n";
         warn "Dependencies not updated.\n";
 
         return ();

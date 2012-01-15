@@ -4,7 +4,12 @@
       "unknown"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112150",
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.113640",
+   "keywords" : [
+      "debian",
+      "package",
+      "helper"
+   ],
    "license" : [
       "open_source"
    ],
@@ -60,6 +65,7 @@
             "File::Find::Rule" : 0,
             "File::Spec" : 0,
             "File::Spec::Functions" : 0,
+            "File::Which" : 0,
             "FindBin" : 0,
             "Getopt::Long" : 0,
             "IO::File" : 0,
@@ -140,7 +146,7 @@
       },
       "DhMakePerl" : {
          "file" : "lib/DhMakePerl.pm",
-         "version" : "0.74"
+         "version" : "0.75"
       },
       "DhMakePerl::Command::Packaging" : {
          "file" : "lib/DhMakePerl/Command/Packaging.pm",
@@ -187,7 +193,10 @@
    "resources" : {
       "license" : [
          "http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt"
-      ]
+      ],
+      "repository" : {
+         "url" : "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git"
+      }
    },
-   "version" : "0.74"
+   "version" : "0.75"
 }
