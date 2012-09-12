@@ -2,6 +2,7 @@ package DhMakePerl::Command::Packaging;
 
 use strict;
 use warnings;
+use feature 'switch';
 
 =head1 NAME
 
@@ -36,7 +37,7 @@ use Parse::DebianChangelog;
 use Text::Wrap qw(fill);
 use User::pwent;
 
-use constant debstdversion => '3.9.2';
+use constant debstdversion => '3.9.3';
 
 our %DEFAULTS = (
     start_dir => getcwd(),
@@ -263,8 +264,14 @@ sub extract_basic {
     $src->Section('perl') unless defined $src->Section;
     $src->Priority('optional') unless defined $src->Priority;
 
-    $bin->Architecture('all');
-    find( sub { $self->check_for_xs }, $self->main_dir );
+    if ( $self->cfg->arch ) {
+        printf "Forcing architecture to '%s'\n", $self->cfg->arch;
+        $bin->Architecture( $self->cfg->arch );
+    }
+    else {
+        $bin->Architecture('all');
+        find( sub { $self->check_for_xs }, $self->main_dir );
+    }
 
     printf(
         "Found: %s %s (%s arch=%s)\n",
@@ -291,6 +298,23 @@ sub extract_basic {
     );
 }
 
+sub sanitize_version {
+    my $self = shift;
+    my ($ver) = @_;
+
+    return undef unless defined($ver);
+
+    $ver =~ s/^v//;
+    $ver =~ s/\.(\d\d\d)(\d\d\d)/.$1.$2/;    # 2.003004 -> 2.003.004
+    $ver =~ s/\.0+(?=\d)/./g;                # 2.003.004 -> 2.3.4
+                                             # but avoid 2.0 -> 2.
+                                             #  or 2.0test -> 2.test
+    $ver =~ s/[^-.+a-zA-Z0-9]+/-/g;
+    $ver = "0$ver" unless $ver =~ /^\d/;
+
+    return $ver;
+}
+
 sub extract_name_ver {
     my ($self) = @_;
 
@@ -299,10 +323,6 @@ sub extract_name_ver {
     if ( defined $self->meta->{name} and defined $self->meta->{version} ) {
         $name = $self->meta->{name};
         $ver  = $self->meta->{version};
-        if ( $ver =~ s/^v// ) {    # v4.43.43?
-            $ver =~ s/\.(\d\d\d)(\d\d\d)/.$1.$2/;    # 2.003004 -> 2.003.004
-            $ver =~ s/\.0+/./g;                      # 2.003.004 -> 2.3.4
-        }
     }
     else {
         if ( -e $self->build_pl ) {
@@ -322,23 +342,20 @@ sub extract_name_ver {
             else {
                 die "Unable to determine dist name, no Build.PL, no Makefile.PL\nPlease use --cpan.\n";
             }
-
-            if ( $self->cfg->version ) {
-                $self->version( $self->cfg->version );
-            }
-            else {
-                die "Unable to determine dist version, no Build.PL, no Makefile.PL\nPlease use --version.\n";
-            }
         }
         $name = $self->perlname;
         $ver  = $self->version;
     }
 
-    # final sanitazing of name and version
-    $ver =~ s/[^-.+a-zA-Z0-9]+/-/g;
-    $ver = "0$ver" unless $ver =~ /^\d/;
+    $ver = $self->cfg->version
+        if $self->cfg->version;
 
+    defined($ver) and $ver ne ''
+        or die "Unable to determine dist version\. Please use --version.\n";
+
+    # final sanitazing of name and version
     $name =~ s/::/-/g;
+    $ver = $self->sanitize_version($ver);
 
     $name
         or $ver
@@ -933,13 +950,13 @@ sub create_copyright {
     $cprt_author =~ s/\n/\n    /gs;
     $cprt_author =~ s/^\s*$/    ./gm;
 
-    push @res, "Format-Specification: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?view=markup&pathrev=135";
+    push @res, 'Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/';
 
     # Header section
     %fields = (
-        Name       => $self->perlname,
-        Maintainer => $cprt_author,
-        Source     => $self->upsurl
+        'Upstream-Name'    => $self->perlname,
+        'Upstream-Contact' => $cprt_author,
+        'Source'           => $self->upsurl
     );
     for my $key ( keys %fields ) {
         my $full = "$key";
@@ -1062,13 +1079,29 @@ sub create_copyright {
         # mind that many licenses are not meant to be used as
         # templates (i.e. you must add the author name and some
         # information within the licensing text as such).
-        if (   $self->meta->{license} and $self->meta->{license} =~ /perl/i
-            or $mangle_cprt =~ /terms\s*as\s*Perl\s*itself/is )
-        {
-            $licenses{'GPL-1+'}   = 1;
-            $licenses{'Artistic'} = 1;
+        if ( $self->meta->{license} ) {
+            foreach ( @{ $self->meta->{license} }) {
+                given ($_) {
+                    when (/apache_2_0/) { $licenses{'Apache-2.0'} = 1; }
+                    when (/artistic_1/) { $licenses{'Artistic'} = 1; }
+                    when (/artistic_2/) { $licenses{'Artistic-2.0'} = 1; }
+                    # EU::MM and M::B converts the unversioned 'gpl' to gpl_1.
+                    # As a unversioned GPL means *any* GPL,I think it's safe to use GPL-1+ here
+                    when (/gpl_1/) { $licenses{'GPL-1+'} = 1; }
+
+                    when (/perl_5/) {
+                       $licenses{'GPL-1+'}   = 1;
+                       $licenses{'Artistic'} = 1;
+                    }
+                }
+          }
         }
         else {
+            if ( $mangle_cprt =~ /terms\s*as\s*Perl\s*itself/is ) {
+              $licenses{'GPL-1+'}   = 1;
+              $licenses{'Artistic'} = 1;
+            }
+
             if ( $mangle_cprt =~ /[^L]GPL/ ) {
                 if ( $mangle_cprt =~ /GPL.*version\s*1.*later\s+version/is ) {
                     $licenses{'GPL-1+'} = 1;
@@ -1320,6 +1353,9 @@ sub configure_cpan {
     $CPAN::Config->{'tar_verbosity'}     = $self->cfg->verbose ? 'v' : '';
     $CPAN::Config->{'load_module_verbosity'}
         = $self->cfg->verbose ? 'verbose' : 'silent';
+
+    $CPAN::Config->{build_requires_install_policy} = 'no';
+    $CPAN::Config->{prerequisites_policy} = 'ignore';
 }
 
 =item discover_dependencies
@@ -1597,7 +1633,7 @@ sub _file_w {
 
 =item Copyright (C) 2007-2011 Gregor Herrmann <gregoa@debian.org>
 
-=item Copyright (C) 2007-2010 Damyan Ivanov <dmn@debian.org>
+=item Copyright (C) 2007,2008,2009,2010,2012 Damyan Ivanov <dmn@debian.org>
 
 =item Copyright (C) 2008, Roberto C. Sanchez <roberto@connexer.com>
 
