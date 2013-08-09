@@ -31,6 +31,8 @@ dh-make-perl - Create debian source packages from Perl modules
 
 =item cpan2deb I<MODULE>|I<DIST> I<options...>
 
+=item cpan2dsc I<MODULE>|I<DIST> I<options...>
+
 =back
 
 =head1 DESCRIPTION
@@ -46,8 +48,8 @@ can specify the directory with the already unpacked sources. If neither
 L<--cpan> nor a directory is given as argument, B<dh-make-perl>
 tries to create a Perl package from the data in the current directory.
 
-You can build and install the debian package using the L</--build>
-and L</--install> command line switches.
+You can build and install the debian binary package using the
+L</--build> and L</--install> command line switches.
 
 If B<dh-make-perl> is called as
 
@@ -56,6 +58,14 @@ If B<dh-make-perl> is called as
 it behaves like
 
     dh-make-perl make <options...> --build --cpan Foo::Bar
+
+If B<dh-make-perl> is called as
+
+    cpan2dsc <options...> Foo::Bar
+
+it behaves like
+
+    dh-make-perl make <options...> --build-source --cpan Foo::Bar
 
 Using this program is no excuse for not reading the
 debian developer documentation, including the Debian policy,
@@ -184,7 +194,7 @@ as for --depends applies here - use only when needed.
 =item B<--bdependsi> I<BUILD-DEPENDS-INDEP>
 
 Manually specify the string to be used for the module's build-dependencies
-for architecture-independent builds. Same notes as those for the --depends 
+for architecture-independent builds. Same notes as those for the --depends
 and --bdepends options apply here.
 
 Note that for --depends, --bdepends and --bdependsi you can also specify that
@@ -193,17 +203,28 @@ the field should not appear in debian/rules (if you really mean it, of course
 
 =item B<--build>
 
-Builds the package after setting it up.
+Builds the binary package (i.e. the .deb file) after setting the
+package directory up.
 
 NB: This builds only a binary package (by calling "fakeroot debian/rules
 binary") and does not sign the package. It is meant for a quick local
 install of a package, not for creating a package ready for submission to the
 Debian archive.
 
+=item B<--build-source>
+
+Builds the source package (i.e. the .dsc and .debian.tar.gz files)
+after setting the package directory up.
+
+NB: This builds only a source package (by calling "dpkg-source -b")
+and does not sign the package. It is meant for a quick local install
+of a source package to be thrown into e.g. a pbuilder, not for
+creating a source package ready for submission to the Debian archive.
+
 =item B<--closes> I<ITPBUG>
 
-Manually specify the ITP bug number that this package closes. If not 
-given, B<dh-make-perl> will try to connect to bugs.debian.org to fetch the 
+Manually specify the ITP bug number that this package closes. If not
+given, B<dh-make-perl> will try to connect to bugs.debian.org to fetch the
 appropriate bug number, using WWW::Mechanize.
 
 =item B<--core-ok>
@@ -212,7 +233,7 @@ Allows building core Perl modules. By default, B<dh-make-perl> will not allow
 building a module that is shipped as part of the standard Perl library; by
 specifying this option, B<dh-make-perl> will build them anyway.
 
-Note that, although it is not probable, this might break unrelated items in 
+Note that, although it is not probable, this might break unrelated items in
 your system - if a newer version of a core module breaks the API, all kinds
 of daemons might get upset ;-)
 
@@ -235,7 +256,7 @@ Contents cache file. If both are given, B<--home-dir> takes precedence.
 
 =item B<--depends> I<DEPENDS>
 
-Manually specify the string to be used for the module's dependencies. This 
+Manually specify the string to be used for the module's dependencies. This
 should be used when building modules where B<dh-make-perl> cannot guess the Perl
 dependencies (such as modules built using L<Module::Install>), or when the
 Perl code depends on non-Perl binaries or libraries. Usually, B<dh-make-perl>
@@ -250,12 +271,14 @@ Uses the argument to --desc as short description for the package.
 
 =item B<--dh> I<VERSION>
 
-Set desired debhelper version. If C<ver> is >=7, generated debian/rules is
-minimalistic, using the auto-mode of debhelper. Also, any additional
-documentation and examples are listed in additional files under debian/,
-instead of being listed in debian/rules.
+Set desired debhelper compatibility level. The default is 8 for
+architecture-independent packages, and 9 for architecture-dependent packages
+(XS).
 
-Since version 0.60, B<dh-make-perl> only supports debhelper compatibility levels B<>=7>.
+Since version 0.77, B<dh-make-perl> only supports debhelper compatibility
+levels B<< >=8 >>.
+
+See L<debhelper(1)>.
 
 =item B<--dist> I<DISTRIBUTION>
 
@@ -410,25 +433,6 @@ as documented in L</OPTIONS> (without leading I<-->).
 See the output of C<dh-make-perl --dump-config>, which can also be used for
 population of F<dh-make-perl.conf>.
 
-=item * rules.MakeMaker.noxs
-
-A debian/rules makefile for modules that use ExtUtils::MakeMaker, but don't
-have C/XS code.
-
-=item * rules.MakeMaker.xs
-
-A debian/rules makefile for modules that use ExtUtils::MakerMaker and
-C/XS code.
-
-=item * rules.Module-Build.noxs
-
-A debian/rules makefile for modules that use Module::Build, but don't have 
-C/XS code.
-
-=item * rules.Module-Build.xs
-
-A debian/rules makefile for modules that use Module::Build and C/XS code.
-
 =back
 
 =head1 ENVIRONMENT
@@ -469,6 +473,8 @@ Patches from:
 
 =item Ansgar Burchardt E<lt>ansgar@debian.orgE<gt>
 
+=item Axel Beckert E<lt>abe@debian.orgE<gt>
+
 =item Christian Kurz E<lt>shorty@debian.orgE<gt>
 
 =item Damyan Ivanov E<lt>divanov@creditreform.bgE<gt>
@@ -503,9 +509,13 @@ Patches from:
 
 =item Matt Hope E<lt>dopey@debian.orgE<gt>
 
+=item Matthew Gabeler-Lee E<lt>cheetah@fastcat.orgE<gt>
+
 =item Maximilian Gass E<lt>mxey@cloudconnected.orgE<gt>
 
 =item Noel Maddy E<lt>noel@zhtwn.comE<gt>
+
+=item Oleg Gashev E<lt>oleg@gashev.netE<gt>
 
 =item Oliver Gorwits E<lt>oliver.gorwits@oucs.ox.ac.ukE<gt>
 

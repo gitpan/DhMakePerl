@@ -13,7 +13,6 @@ __PACKAGE__->mk_accessors(
         perlname version pkgversion
         copyright author
         extrasfields  extrapfields
-        mod_cpan_version
         docs examples
         )
 );
@@ -82,6 +81,8 @@ sub execute {
 
     $self->extract_basic();
 
+    $tarball //= $self->guess_tarball if $self->cfg->{vcs} eq 'git';
+
     unless ( defined $self->cfg->version ) {
         $self->pkgversion( $self->version . '-1' );
     }
@@ -91,7 +92,7 @@ sub execute {
 
     $self->fill_maintainer;
 
-    my $bin = $self->control->binary->Values(0);
+    my $bin = $self->control->binary_tie->Values(0);
     $bin->short_description( $self->cfg->desc )
         if $self->cfg->desc;
 
@@ -104,6 +105,15 @@ sub execute {
         $tarball = $dest;
     }
 
+    # Here I init the git repo. If the upstream has a debian/ directory, this is
+    # removed in a separate git commit
+    $self->git_import_upstream__init_debian
+        if $self->cfg->{vcs} eq 'git';
+
+    # if the upstream has a debian/ directory, rename it to debian.bak so that
+    # dh-make-perl can create its own debian/ directory. If we're creating a git
+    # repo, the original debian/ directory was already dealt with by
+    # git_import_upstream__init_debian()
     if ( -d $self->debian_dir ) {
         $self->warning( $self->debian_dir . ' already exists' );
         my $bak = $self->debian_dir . '.bak';
@@ -159,6 +169,8 @@ sub execute {
 
     # now that rules are there, see if we need some dependency for them
     $self->discover_utility_deps( $self->control );
+    $self->control->prune_perl_deps;
+    $self->prune_deps;
     $src->Standards_Version( $self->debstdversion );
     $src->Homepage( $self->upsurl );
     if ( $self->cfg->pkg_perl ) {
@@ -175,7 +187,7 @@ sub execute {
         }
         elsif ( $vcs eq 'git' ) {
             $self->control->source->Vcs_Git(
-                sprintf( "git://git.debian.org/pkg-perl/packages/%s.git",
+                sprintf( "git://anonscm.debian.org/pkg-perl/packages/%s.git",
                     $self->pkgname )
             );
             $self->control->source->Vcs_Browser(
@@ -221,18 +233,39 @@ sub execute {
         }
     }
 
+    $self->git_add_debian($tarball)
+        if $self->cfg->{vcs} eq 'git';
+
+    $self->build_source_package
+        if $self->cfg->build_source;
     $self->build_package
         if $self->cfg->build or $self->cfg->install;
     $self->install_package if $self->cfg->install;
     print "--- Done\n" if $self->cfg->verbose;
 
-    $self->setup_git_repository($tarball)
-        if $self->cfg->{vcs} eq 'git';
-
-    $self->package_already_exists($apt_contents) 
+    $self->package_already_exists($apt_contents)
         or $self->modules_already_packaged($apt_contents);
 
     return(0);
+}
+
+sub guess_tarball {
+    my $self = shift;
+
+    my $try = catfile( $self->main_dir, '..',
+              $self->control->source->Source . '_'
+            . $self->version
+            . '.orig.tar.gz' );
+
+    print "Trying $try...";
+    if ( -f $try ) {
+        print " found!\n";
+        return $try;
+    }
+    else {
+        print " not found.\n";
+        return undef;
+    }
 }
 
 sub setup_dir {
@@ -247,8 +280,8 @@ sub setup_dir {
         $orig_pwd = $ENV{'PWD'};
 
         # Is the module a core module?
-        if ( is_core_module( $self->cfg->cpan ) ) {
-            die $self->cfg->cpan 
+       if ( is_core_module( $self->cfg->cpan ) ) {
+            die $self->cfg->cpan
             . " is a standard module. Will not build without --core-ok.\n"
                 unless $self->cfg->core_ok;
         }
@@ -263,7 +296,7 @@ sub setup_dir {
         }
         elsif ( $dist = find_cpan_distribution( $self->cfg->cpan ) ) {
             my $ver;
-            if ( $dist->base_id =~ /-(\d[\d._]*)\./ ) {
+            if ( $dist->base_id =~ /-v?(\d[\d._]*)\./ ) {
                 $self->mod_cpan_version($1);
             }
             else {
@@ -311,7 +344,7 @@ sub setup_dir {
     elsif ( $self->cfg->cpanplus ) {
         die "CPANPLUS support is b0rken at the moment.";
 
-        #  	        my ($cb, $href, $file);
+# 		my ($cb, $href, $file);
 
 # 		eval "use CPANPLUS 0.045;";
 # 		$cb = CPANPLUS::Backend->new(conf => {debug => 1, verbose => 1});
@@ -327,6 +360,17 @@ sub setup_dir {
         my $maindir = shift(@ARGV) || '.';
         $maindir =~ s/\/$//;
         $self->main_dir($maindir);
+        my $guessed_tarball = catfile( $self->start_dir, "..",
+            basename( $self->start_dir ) . ".tar.gz" );
+
+        print "Trying $guessed_tarball...";
+        if ( -f $guessed_tarball ) {
+            $tarball = $guessed_tarball;
+            print " found.\n";
+        }
+        else {
+            print " not found.\n";
+        }
     }
     return $tarball;
 }
@@ -338,10 +382,21 @@ sub build_package {
     # uhmf! dpkg-genchanges doesn't cope with the deb being in another dir..
     #system("dpkg-buildpackage -b -us -uc " . $self->cfg->dbflags) == 0
     system("fakeroot make -C $main_dir -f debian/rules clean");
-    system("make -C $main_dir -f debian/rules build") == 0 
+    system("make -C $main_dir -f debian/rules build") == 0
         || die "Cannot create deb package: 'debian/rules build' failed.\n";
     system("fakeroot make -C $main_dir -f debian/rules binary") == 0
         || die "Cannot create deb package: 'fakeroot debian/rules binary' failed.\n";
+}
+
+sub build_source_package {
+    my ( $self ) = @_;
+
+    my $main_dir = $self->main_dir;
+    # uhmf! dpkg-genchanges doesn't cope with the deb being in another dir..
+    #system("dpkg-buildpackage -S -us -uc " . $self->cfg->dbflags) == 0
+    system("fakeroot make -C $main_dir -f debian/rules clean");
+    system("dpkg-source -b $main_dir") == 0
+        || die "Cannot create source package: 'dpkg-source -b' failed.\n";
 }
 
 sub install_package {
@@ -349,7 +404,7 @@ sub install_package {
 
     my ( $archspec, $debname );
 
-    my $arch = $self->control->binary->Values(0)->Architecture;
+    my $arch = $self->control->binary_tie->Values(0)->Architecture;
 
     if ( !defined $arch || $arch eq 'any' ) {
         $archspec = `dpkg --print-architecture`;
@@ -471,6 +526,35 @@ sub create_watch {
     $fh->close;
 }
 
+sub search_pkg_perl {
+    my $self = shift;
+
+    return undef unless $self->cfg->network;
+
+    my $pkg = $self->pkgname;
+
+    require LWP::UserAgent;
+    require LWP::ConnCache;
+
+    my ( $ua, $resp );
+
+    $ua = LWP::UserAgent->new;
+    $ua->env_proxy;
+    $ua->conn_cache( LWP::ConnCache->new );
+
+    $resp = $ua->get(
+        "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/$pkg.git");
+    return { url => $resp->request->uri }
+        if $resp->is_success;
+
+    $resp = $ua->get(
+        "http://anonscm.debian.org/gitweb/?p=pkg-perl/attic/$pkg.git");
+    return { url => $resp->request->uri }
+        if $resp->is_success;
+
+    return undef;
+}
+
 sub package_already_exists {
     my( $self, $apt_contents ) = @_;
 
@@ -494,8 +578,7 @@ sub package_already_exists {
         warn "Description: $short_desc\n";
     }
     elsif ($apt_contents) {
-        my $found
-            = $apt_contents->find_perl_module_package( $self->perlname );
+        $found = $apt_contents->find_perl_module_package( $self->perlname );
 
         if ($found) {
             ( my $mod_name = $self->perlname ) =~ s/-/::/g;
@@ -503,6 +586,14 @@ sub package_already_exists {
             warn "NOTICE: the package '$found', available in APT repositories\n";
             warn "        already contains a module named "
                 . $self->perlname . "\n";
+        }
+        elsif ( $found = $self->search_pkg_perl ) {
+            warn "********************\n";
+            warn sprintf(
+                "The Debian Perl Group has a repository for the %s package\n  at %s\n",
+                $self->pkgname, $found->{url} );
+            warn "You may want to contact them to avoid duplication of effort.\n";
+            warn "More information is available at https://wiki.debian.org/Teams/DebianPerlGroup\n";
         }
     }
     else {
@@ -591,25 +682,42 @@ EOF
     return $found ? 1 : 0;
 }
 
-sub setup_git_repository {
-    my ( $self, $tarball ) = @_;
+sub git_import_upstream__init_debian {
+    my ( $self ) = @_;
 
     require Git;
-    require IO::Dir;
-    require File::Which;
 
     Git::command( 'init', $self->main_dir );
 
     my $git = Git->repository( $self->main_dir );
     $git->command( qw(symbolic-ref HEAD refs/heads/upstream) );
-    $git->command( 'add', $self->main_dir );
-    $git->command( 'rm', '--cached', '-r', $self->debian_dir );
+    $git->command( 'add', '.' );
     $git->command( 'commit', '-m',
               "Import original source of "
             . $self->perlname . ' '
             . $self->version );
     $git->command( 'tag', "upstream/".$self->version, 'upstream' );
+
     $git->command( qw( checkout -b master upstream ) );
+    if ( -d $self->debian_dir ) {
+      # remove debian/ directory if the upstream ships it. This goes into the
+      # 'master' branch, so the 'upstream' branch contains the original debian/
+      # directory, and thus matches the pristine-tar. Here I also remove the
+      # debian/ directory from the working tree; git has the history, so I don't
+      # need the debian.bak
+      $git->command( 'rm', '-r', $self->debian_dir );
+      $git->command( 'commit', '-m',
+                     'Removed debian directory embedded in upstream source' );
+    }
+}
+
+sub git_add_debian {
+    my ( $self, $tarball ) = @_;
+
+    require Git;
+    require File::Which;
+
+    my $git = Git->repository( $self->main_dir );
     $git->command( 'add', 'debian' );
     $git->command( 'commit', '-m', 'Initial packaging by dh-make-perl' );
     $git->command(
@@ -618,7 +726,7 @@ sub setup_git_repository {
             $self->pkgname ),
     ) if $self->cfg->pkg_perl;
 
-    if ( File::Which::which('pristine-tar') ) {
+    if ( File::Which::which('pristine-tar') and $tarball ) {
         $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
         system( 'pristine-tar', 'commit', $tarball, "upstream/".$self->version ) >= 0
             or warn "error running pristine-tar: $!\n";
@@ -696,13 +804,15 @@ L<http://bugs.debian.org/dh-make-perl>
 
 =item Copyright (C) 2006 Frank Lichtenheld <djpig@debian.org>
 
-=item Copyright (C) 2007-2010 Gregor Herrmann <gregoa@debian.org>
+=item Copyright (C) 2007-2013 Gregor Herrmann <gregoa@debian.org>
 
 =item Copyright (C) 2007,2008,2009,2010,2011,2012 Damyan Ivanov <dmn@debian.org>
 
 =item Copyright (C) 2008, Roberto C. Sanchez <roberto@connexer.com>
 
 =item Copyright (C) 2009-2010, Salvatore Bonaccorso <carnil@debian.org>
+
+=item Copyright (C) 2013, Axel Beckert <abe@debian.org>
 
 =back
 

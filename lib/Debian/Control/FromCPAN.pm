@@ -23,7 +23,7 @@ use DhMakePerl::Utils qw( is_core_module find_cpan_module nice_perl_ver split_ve
 use File::Spec qw( catfile );
 use Module::Depends ();
 
-use constant oldstable_perl_version => '5.10.0';
+use constant oldstable_perl_version => '5.10.1';
 
 =head1 METHODS
 
@@ -91,7 +91,7 @@ sub discover_dependencies {
         if %$opts;
 
     my $src = $self->source;
-    my $bin = $self->binary->Values(0);
+    my $bin = $self->binary_tie->Values(0);
 
     local @INC = ( $dir, @INC );
 
@@ -208,7 +208,10 @@ sub discover_dependencies {
             $missing_debs_str
                 = "Needs the following modules for which there are no debian packages available:\n";
             for (@$missing) {
-                my $bug = ( $wnpp_query->bugs_for_package($_) )[0];
+                my $bug
+                    = $wnpp_query
+                    ? ( $wnpp_query->bugs_for_package($_) )[0]
+                    : undef;
                 $missing_debs_str .= " - $_";
                 $missing_debs_str .= " (" . $bug->type_and_number . ')'
                     if $bug;
@@ -218,7 +221,10 @@ sub discover_dependencies {
         else {
             $missing_debs_str = "The following Perl modules are required and not installed in your system:\n";
             for (@$missing) {
-                my $bug = ( $wnpp_query->bugs_for_package($_) )[0];
+                my $bug
+                    = $wnpp_query
+                    ? ( $wnpp_query->bugs_for_package($_) )[0]
+                    : undef;
                 $missing_debs_str .= " - $_";
                 $missing_debs_str .= " (" . $bug->type_and_number . ')'
                     if $bug;
@@ -302,6 +308,43 @@ sub find_debs_for_modules {
                     print "+ $mod_ver found in $dep\n";
                 }
             }
+
+            my $target_perl_version = $^V;
+            $target_perl_version =~ s/^v//;
+            $target_perl_version = Dpkg::Version->new($target_perl_version);
+
+            if (    $dep->pkg
+                and $dep->pkg eq 'perl'
+                and $dep->ver
+                and $dep->ver > $target_perl_version )
+            {
+                print "  ! $dep is too new. Adding alternative dependency\n"
+                    if $verbose;
+
+                my $alt_dep;
+
+                if ( my @pkgs = Debian::DpkgLists->scan_perl_mod($module) ) {
+                    @pkgs = grep { $_ ne 'perl-modules' } @pkgs;
+
+                    $alt_dep = Debian::Dependency->new(
+                          ( @pkgs > 1 )
+                        ? [ map { { pkg => $_, ver => $version } } @pkgs ]
+                        : ( $pkgs[0], $version )
+                    );
+                }
+                elsif ($apt_contents) {
+                    $alt_dep
+                        = $apt_contents->find_perl_module_package( $module,
+                        $version );
+                }
+
+                $alt_dep
+                    //= Debian::Dependency->new(
+                    $self->module_name_to_pkg_name($module),
+                    '>=', $version );
+
+                $dep = Debian::Dependency->new("$alt_dep | $dep");
+            }
         }
         else {
             print "- $mod_ver not found in any package\n";
@@ -310,7 +353,7 @@ sub find_debs_for_modules {
             my $mod = find_cpan_module($module);
             if ( $mod and $mod->distribution ) {
                 ( my $dist = $mod->distribution->base_id ) =~ s/-v?\d[^-]*$//;
-                my $pkg = 'lib' . lc($dist) . '-perl';
+                my $pkg = $self->module_name_to_pkg_name($dist);
 
                 print "   CPAN contains it in $dist\n";
                 print "   substituting package name of $pkg\n";
@@ -468,7 +511,7 @@ sub prune_perl_deps {
 
     # remove depending on ancient perl versions
     for my $perl ( qw( perl perl-base perl-modules ) ) {
-        for my $pkg ( $self->binary->Values ) {
+        for my $pkg ( $self->binary_tie->Values ) {
             for my $rel ( qw(Depends Recommends Suggests) ) {
                 my @ess = $pkg->$rel->remove($perl);
                 for my $dep (@ess) {
@@ -479,6 +522,35 @@ sub prune_perl_deps {
             }
         }
     }
+}
+
+=back
+
+=head1 CLASS METHODS
+
+=over
+
+=item module_name_to_pkg_name
+
+Receives a perl module name like C<Foo::Bar> and returns a suitable Debian
+package name for it, like C<libfoo-bar-perl>.
+
+=cut
+
+sub module_name_to_pkg_name {
+    my ( $self, $module ) = @_;
+
+    my $pkg = lc $module;
+
+    # ensure policy compliant names and versions (from Joeyh)...
+    $pkg =~ s/[^-.+a-zA-Z0-9]+/-/g;
+
+    $pkg =~ s/--+/-/g;
+
+    $pkg = 'lib' . $pkg unless $pkg =~ /^lib/;
+    $pkg .= '-perl';
+
+    return $pkg;
 }
 
 =back

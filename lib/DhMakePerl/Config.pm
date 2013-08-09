@@ -17,6 +17,7 @@ use constant options => (
     'arch=s',          'backups!',
     'basepkgs=s',
     'bdepends=s',      'bdependsi=s',
+    'build-source!',
     'build!',          'closes=i',
     'config-file=s',   'core-ok',
     'cpan-mirror=s',   'cpan=s',
@@ -51,6 +52,7 @@ __PACKAGE__->mk_accessors(
     },
     'command',
     'cpan2deb',
+    'cpan2dsc',
     '_explicitly_set',
 );
 
@@ -64,7 +66,7 @@ use constant DEFAULTS => {
     backups       => 1,
     data_dir      => '/usr/share/dh-make-perl',
     dbflags       => ( $> == 0 ? "" : "-rfakeroot" ),
-    dh            => 8,
+    dh            => 9,
     dist          => '',
     email         => '',
     exclude       => qr/$Dpkg::Source::Package::diff_ignore_default_regexp/,
@@ -82,11 +84,18 @@ use constant cpan2deb_DEFAULTS => {
     #recursive   => 1,
 };
 
+use constant cpan2dsc_DEFAULTS => {
+    build_source => 1,
+
+    #recursive   => 1,
+};
+
 sub new {
     my $class = shift;
     my $values = shift || {};
 
     my $cpan2deb = basename($0) eq 'cpan2deb';
+    my $cpan2dsc = basename($0) eq 'cpan2dsc';
 
     my $self = $class->SUPER::new(
         {   %{ $class->DEFAULTS },
@@ -94,7 +103,12 @@ sub new {
                 ? %{ $class->cpan2deb_DEFAULTS }
                 : ()
             ),
+            (   $cpan2dsc
+                ? %{ $class->cpan2dsc_DEFAULTS }
+                : ()
+            ),
             cpan2deb    => $cpan2deb,
+            cpan2dsc    => $cpan2dsc,
             %$values,
         },
     );
@@ -129,7 +143,7 @@ sub parse_command_line_options {
     $opts{cpan} =~ s![/-]!::!g if $opts{cpan};
 
     # "If no argument is given (but the switch is specified - not specifying
-    # the switch will include everything), it defaults to dpkg-source's 
+    # the switch will include everything), it defaults to dpkg-source's
     # default values."
     $opts{exclude} = '^$' if ! defined $opts{exclude};                 # switch not specified
                                                                        # take everything
@@ -193,6 +207,15 @@ sub parse_command_line_options {
         $self->cpan( shift @ARGV );
         $self->_explicitly_set->{cpan} = 1;
         $self->build(1);
+        $self->command('make');
+    }
+
+    if ($self->cpan2dsc) {
+        @ARGV == 1 or die "cpan2dsc requires exactly one non-option argument";
+
+        $self->cpan( shift @ARGV );
+        $self->_explicitly_set->{cpan} = 1;
+        $self->build_source(1);
         $self->command('make');
     }
 
@@ -282,8 +305,8 @@ sub check_obsolete_entries {
     warn "--notest ignored. if you don't want to run the tests when building the package, add 'nocheck' to DEB_BUILD_OPTIONS\n"
         if $self->notest;
 
-    if ( $self->dh < 7 ) {
-        warn "debhelper compatibility levels before 7 are not supported.\n";
+    if ( $self->dh < 8 ) {
+        warn "debhelper compatibility levels before 8 are not supported.\n";
         exit(1);
     }
 }

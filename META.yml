@@ -5,6 +5,7 @@ author:
 build_requires:
   File::DirCompare: 0
   File::Touch: 0
+  IPC::Run: 0
   Test::Compile: 0
   Test::Deep: 0
   Test::Differences: 0
@@ -13,7 +14,7 @@ build_requires:
 configure_requires:
   Module::Build: 0.38
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4001, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Module::Build version 0.4005, CPAN::Meta::Converter version 2.131560'
 keywords:
   - debian
   - package
@@ -32,76 +33,53 @@ no_index:
 provides:
   Debian::AptContents:
     file: lib/Debian/AptContents.pm
-    version: 0
   Debian::Control:
     file: lib/Debian/Control.pm
-    version: 0
   Debian::Control::FromCPAN:
     file: lib/Debian/Control/FromCPAN.pm
-    version: 0
   Debian::Control::Stanza:
     file: lib/Debian/Control/Stanza.pm
-    version: 0
   Debian::Control::Stanza::Binary:
     file: lib/Debian/Control/Stanza/Binary.pm
-    version: 0
   Debian::Control::Stanza::CommaSeparated:
     file: lib/Debian/Control/Stanza/CommaSeparated.pm
-    version: 0
   Debian::Control::Stanza::Source:
     file: lib/Debian/Control/Stanza/Source.pm
-    version: 0
   Debian::Dependencies:
     file: lib/Debian/Dependencies.pm
-    version: 0
   Debian::Dependency:
     file: lib/Debian/Dependency.pm
-    version: 0
   Debian::DpkgLists:
     file: lib/Debian/DpkgLists.pm
-    version: 0
   Debian::Rules:
     file: lib/Debian/Rules.pm
-    version: 0
   Debian::WNPP::Bug:
     file: lib/Debian/WNPP/Bug.pm
-    version: 0
   Debian::WNPP::Query:
     file: lib/Debian/WNPP/Query.pm
-    version: 0
   DhMakePerl:
     file: lib/DhMakePerl.pm
-    version: 0.76
+    version: 0.77
   DhMakePerl::Command::Packaging:
     file: lib/DhMakePerl/Command/Packaging.pm
-    version: 0
   DhMakePerl::Command::dump_config:
     file: lib/DhMakePerl/Command/dump_config.pm
-    version: 0
   DhMakePerl::Command::help:
     file: lib/DhMakePerl/Command/help.pm
-    version: 0
   DhMakePerl::Command::locate:
     file: lib/DhMakePerl/Command/locate.pm
-    version: 0
   DhMakePerl::Command::make:
     file: lib/DhMakePerl/Command/make.pm
-    version: 0
   DhMakePerl::Command::refresh:
     file: lib/DhMakePerl/Command/refresh.pm
-    version: 0
   DhMakePerl::Command::refresh_cache:
     file: lib/DhMakePerl/Command/refresh_cache.pm
-    version: 0
   DhMakePerl::Config:
     file: lib/DhMakePerl/Config.pm
-    version: 0
   DhMakePerl::PodParser:
     file: lib/DhMakePerl/PodParser.pm
-    version: 0
   DhMakePerl::Utils:
     file: lib/DhMakePerl/Utils.pm
-    version: 0
 recommends:
   Git: 0
   IO::Dir: 0
@@ -148,4 +126,4 @@ requires:
 resources:
   license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
   repository: http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git
-version: 0.76
+version: 0.77

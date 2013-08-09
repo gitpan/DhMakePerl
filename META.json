@@ -4,7 +4,7 @@
       "unknown"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4001, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Module::Build version 0.4005, CPAN::Meta::Converter version 2.131560",
    "keywords" : [
       "debian",
       "package",
@@ -31,6 +31,7 @@
          "requires" : {
             "File::DirCompare" : "0",
             "File::Touch" : "0",
+            "IPC::Run" : "0",
             "Test::Compile" : "0",
             "Test::Deep" : "0",
             "Test::Differences" : "0",
@@ -93,100 +94,77 @@
    },
    "provides" : {
       "Debian::AptContents" : {
-         "file" : "lib/Debian/AptContents.pm",
-         "version" : 0
+         "file" : "lib/Debian/AptContents.pm"
       },
       "Debian::Control" : {
-         "file" : "lib/Debian/Control.pm",
-         "version" : 0
+         "file" : "lib/Debian/Control.pm"
       },
       "Debian::Control::FromCPAN" : {
-         "file" : "lib/Debian/Control/FromCPAN.pm",
-         "version" : 0
+         "file" : "lib/Debian/Control/FromCPAN.pm"
       },
       "Debian::Control::Stanza" : {
-         "file" : "lib/Debian/Control/Stanza.pm",
-         "version" : 0
+         "file" : "lib/Debian/Control/Stanza.pm"
       },
       "Debian::Control::Stanza::Binary" : {
-         "file" : "lib/Debian/Control/Stanza/Binary.pm",
-         "version" : 0
+         "file" : "lib/Debian/Control/Stanza/Binary.pm"
       },
       "Debian::Control::Stanza::CommaSeparated" : {
-         "file" : "lib/Debian/Control/Stanza/CommaSeparated.pm",
-         "version" : 0
+         "file" : "lib/Debian/Control/Stanza/CommaSeparated.pm"
       },
       "Debian::Control::Stanza::Source" : {
-         "file" : "lib/Debian/Control/Stanza/Source.pm",
-         "version" : 0
+         "file" : "lib/Debian/Control/Stanza/Source.pm"
       },
       "Debian::Dependencies" : {
-         "file" : "lib/Debian/Dependencies.pm",
-         "version" : 0
+         "file" : "lib/Debian/Dependencies.pm"
       },
       "Debian::Dependency" : {
-         "file" : "lib/Debian/Dependency.pm",
-         "version" : 0
+         "file" : "lib/Debian/Dependency.pm"
       },
       "Debian::DpkgLists" : {
-         "file" : "lib/Debian/DpkgLists.pm",
-         "version" : 0
+         "file" : "lib/Debian/DpkgLists.pm"
       },
       "Debian::Rules" : {
-         "file" : "lib/Debian/Rules.pm",
-         "version" : 0
+         "file" : "lib/Debian/Rules.pm"
       },
       "Debian::WNPP::Bug" : {
-         "file" : "lib/Debian/WNPP/Bug.pm",
-         "version" : 0
+         "file" : "lib/Debian/WNPP/Bug.pm"
       },
       "Debian::WNPP::Query" : {
-         "file" : "lib/Debian/WNPP/Query.pm",
-         "version" : 0
+         "file" : "lib/Debian/WNPP/Query.pm"
       },
       "DhMakePerl" : {
          "file" : "lib/DhMakePerl.pm",
-         "version" : "0.76"
+         "version" : "0.77"
       },
       "DhMakePerl::Command::Packaging" : {
-         "file" : "lib/DhMakePerl/Command/Packaging.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/Packaging.pm"
       },
       "DhMakePerl::Command::dump_config" : {
-         "file" : "lib/DhMakePerl/Command/dump_config.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/dump_config.pm"
       },
       "DhMakePerl::Command::help" : {
-         "file" : "lib/DhMakePerl/Command/help.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/help.pm"
       },
       "DhMakePerl::Command::locate" : {
-         "file" : "lib/DhMakePerl/Command/locate.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/locate.pm"
       },
       "DhMakePerl::Command::make" : {
-         "file" : "lib/DhMakePerl/Command/make.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/make.pm"
       },
       "DhMakePerl::Command::refresh" : {
-         "file" : "lib/DhMakePerl/Command/refresh.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/refresh.pm"
       },
       "DhMakePerl::Command::refresh_cache" : {
-         "file" : "lib/DhMakePerl/Command/refresh_cache.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Command/refresh_cache.pm"
       },
       "DhMakePerl::Config" : {
-         "file" : "lib/DhMakePerl/Config.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Config.pm"
       },
       "DhMakePerl::PodParser" : {
-         "file" : "lib/DhMakePerl/PodParser.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/PodParser.pm"
       },
       "DhMakePerl::Utils" : {
-         "file" : "lib/DhMakePerl/Utils.pm",
-         "version" : 0
+         "file" : "lib/DhMakePerl/Utils.pm"
       }
    },
    "release_status" : "stable",
@@ -198,5 +176,5 @@
          "url" : "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git"
       }
    },
-   "version" : "0.76"
+   "version" : "0.77"
 }

@@ -27,16 +27,12 @@ lib/DhMakePerl/Command/refresh_cache.pm
 lib/DhMakePerl/Config.pm
 lib/DhMakePerl/PodParser.pm
 lib/DhMakePerl/Utils.pm
-libimager-qrcode-perl_0.033.orig.tar.gz
 Makefile
 MANIFEST			This list of files
 MANIFEST.SKIP
 privinc/My/Builder.pm
 README
-share/rules.dh7+quilt.xs+noxs
-share/rules.dh7.noxs
 share/rules.dh7.tiny
-share/rules.dh7.xs
 t/00-load.t
 t/AptContents.t
 t/cache.t
@@ -90,10 +86,12 @@ t/dists/Strange-0.1/wanted-debian/watch
 t/dists/Strange-2.1/Changes
 t/dists/Strange-2.1/Makefile.PL
 t/dists/Strange-2.1/MANIFEST
+t/dists/Strange-2.1/MYMETA.yml
 t/dists/Strange-2.1/README
 t/dists/Strange-2.1/Strange.pm
 t/dists/Strange-2.1/Strange.xs
 t/dists/Strange-2.1/test.pl
+t/dists/Strange-2.1/TODO
 t/dists/Strange-2.1/wanted-debian--refresh--source-format=3.0_quilt/changelog
 t/dists/Strange-2.1/wanted-debian--refresh--source-format=3.0_quilt/compat
 t/dists/Strange-2.1/wanted-debian--refresh--source-format=3.0_quilt/control

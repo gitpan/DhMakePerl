@@ -14,6 +14,7 @@ use base 'DhMakePerl';
 
 __PACKAGE__->mk_accessors(
     qw( start_dir main_dir debian_dir
+        mod_cpan_version
         meta perlname author
         version rules docs examples copyright
         control
@@ -34,10 +35,11 @@ use File::Find qw(find);
 use File::Path ();
 use File::Spec::Functions qw(catfile catpath splitpath);
 use Parse::DebianChangelog;
+use Text::Balanced qw(extract_quotelike);
 use Text::Wrap qw(fill);
 use User::pwent;
 
-use constant debstdversion => '3.9.3';
+use constant debstdversion => '3.9.4';
 
 our %DEFAULTS = (
     start_dir => getcwd(),
@@ -200,20 +202,15 @@ sub set_package_name {
       $pkgname = $self->cfg->packagename;
     }
     else {
-      $pkgname = lc $self->perlname;
-      $pkgname = 'lib' . $pkgname unless $pkgname =~ /^lib/;
-      $pkgname .= '-perl';
+        $pkgname = Debian::Control::FromCPAN->module_name_to_pkg_name( $self->perlname );
     }
-
-    # ensure policy compliant names and versions (from Joeyh)...
-    $pkgname =~ s/[^-.+a-zA-Z0-9]+/-/g;
 
     $self->control->source->Source($pkgname)
         unless $self->control->source->Source;
 
-    $self->control->binary->Push( $pkgname =>
+    $self->control->binary_tie->Push( $pkgname =>
             Debian::Control::Stanza::Binary->new( { Package => $pkgname } ) )
-        unless $self->control->binary->FETCH($pkgname);
+        unless $self->control->binary->{$pkgname};
 }
 
 sub pkgname {
@@ -221,7 +218,7 @@ sub pkgname {
 
     my $self = shift;
 
-    my $pkg = $self->control->binary->Values(0)->Package;
+    my $pkg = $self->control->binary_tie->Values(0)->Package;
 
     defined($pkg) and $pkg ne ''
         or confess "called before set_package_name()";
@@ -259,7 +256,7 @@ sub extract_basic {
     $self->extract_name_ver();
 
     my $src = $self->control->source;
-    my $bin = $self->control->binary->Values(0);
+    my $bin = $self->control->binary_tie->Values(0);
 
     $src->Section('perl') unless defined $src->Section;
     $src->Priority('optional') unless defined $src->Priority;
@@ -272,6 +269,10 @@ sub extract_basic {
         $bin->Architecture('all');
         find( sub { $self->check_for_xs }, $self->main_dir );
     }
+
+    $self->cfg->dh('9')
+        if $bin->Architecture eq 'any'
+        and not $self->cfg->_explicitly_set->{dh};
 
     printf(
         "Found: %s %s (%s arch=%s)\n",
@@ -305,10 +306,6 @@ sub sanitize_version {
     return undef unless defined($ver);
 
     $ver =~ s/^v//;
-    $ver =~ s/\.(\d\d\d)(\d\d\d)/.$1.$2/;    # 2.003004 -> 2.003.004
-    $ver =~ s/\.0+(?=\d)/./g;                # 2.003.004 -> 2.3.4
-                                             # but avoid 2.0 -> 2.
-                                             #  or 2.0test -> 2.test
     $ver =~ s/[^-.+a-zA-Z0-9]+/-/g;
     $ver = "0$ver" unless $ver =~ /^\d/;
 
@@ -323,6 +320,10 @@ sub extract_name_ver {
     if ( defined $self->meta->{name} and defined $self->meta->{version} ) {
         $name = $self->meta->{name};
         $ver  = $self->meta->{version};
+    }
+    elsif ( defined $self->cfg->packagename and defined $self->cfg->version ) {
+        $name = $self->cfg->packagename;
+        $ver  = $self->cfg->version;
     }
     else {
         if ( -e $self->build_pl ) {
@@ -355,7 +356,7 @@ sub extract_name_ver {
 
     # final sanitazing of name and version
     $name =~ s/::/-/g;
-    $ver = $self->sanitize_version($ver);
+    $ver = $self->sanitize_version($ver) unless $self->cfg->version;
 
     $name
         or $ver
@@ -400,11 +401,10 @@ sub extract_name_ver_from_build {
 		 module_name\1\s*
 		 (=>|,)
 		 \s*
-		 ([\'\"]?)
-		 (\S+)\3/xs
+		 (\S+)/xs
         )
     {
-        $name = $4;
+        $name = $self->unquote($2);
         $name =~ s/::/-/g;
 
         # just in case we need it later
@@ -510,51 +510,42 @@ sub extract_name_ver_from_makefile {
         $file = $fh->getline;
     }
 
-    # Replace q[quotes] by "quotes"
-    $file =~ s/q\[(.+)]/'$1'/g;
-
     # Get the name
     if ($file =~ /([\'\"]?)
 	    DISTNAME\1\s*
 	    (=>|,)
 	    \s*
-	    ([\'\"]?)
-	    (\S+)\3/xs
+	    (\S+)/xs
         )
     {
 
         # Regular MakeMaker
-        $name = $4;
+        $name = $self->unquote($3);
     }
     elsif (
         $file =~ /([\'\"]?)
 		 NAME\1\s*
 		 (=>|,)
 		 \s*
-		 ([\'\"]?)
-		 (\S+)\3/xs
+		 (\S+)\s*,?/xs
         )
     {
 
         # Regular MakeMaker
-        $name = $4;
+        $name = $self->unquote($3);
     }
     elsif (
         $file =~ m{
                         name
                          \s*
-                         \(?                    # Optional open paren
-                             ([\'\"]?)          # Optional open quote
                                  (\S+)          # Quoted name
-                             \1                 # Optional close quote
-                         \)?                    # Optional close paren
                          \s*;
                  }xs
         )
     {
 
         # Module::Install syntax
-        $name = $2;
+        $name = $self->unquote($1);
     }
     $name =~ s/,.*$//;
 
@@ -588,7 +579,7 @@ sub extract_name_ver_from_makefile {
         $vfrom = $4;
 
     }
-    elsif ( 
+    elsif (
         $file =~ m{
             \bversion\b\s*                  # The word version
             \(?\s*                          # Optional open-parens
@@ -596,7 +587,7 @@ sub extract_name_ver_from_makefile {
             ([\d_.]+)                       # The actual version.
             \1                              # Optional close-quotes
             \s*\)?                          # Optional close-parenthesis.
-        }sx 
+        }sx
     ) {
 
         # Module::Install
@@ -664,7 +655,7 @@ sub extract_name_ver_from_makefile {
 sub extract_desc {
     my ( $self, $file ) = @_;
 
-    my $bin = $self->control->binary->Values(0);
+    my $bin = $self->control->binary_tie->Values(0);
     my $desc = $bin->short_description;
 
     $desc and return;
@@ -716,6 +707,7 @@ sub extract_desc {
             || '';
         ( $modulename = $self->perlname ) =~ s/-/::/g;
         $long_desc =~ s/This module/$modulename/;
+        $long_desc =~ s/This library/$modulename/;
 
         local ($Text::Wrap::columns) = 78;
         $long_desc = fill( "", "", $long_desc );
@@ -747,7 +739,7 @@ sub check_for_xs {
     ( !$self->cfg->exclude or $rel_path !~ $self->cfg->exclude )
         && /\.(xs|c|cpp|cxx)$/i
         && do {
-        $self->control->binary->Values(0)->Architecture('any');
+        $self->control->binary_tie->Values(0)->Architecture('any');
         };
 }
 
@@ -815,7 +807,8 @@ sub extract_docs {
                     substr( $File::Find::name, length($dir) )
                     )
                     if (
-                        /^\b(README|TODO|BUGS|NEWS|ANNOUNCE)\b/i
+                        $File::Find::name ne $self->main_dir . '/README'
+                    and /^\b(README|TODO|BUGS|NEWS|ANNOUNCE)\b/i
                     and !/\.(pod|pm)$/
                     and ( !$self->cfg->exclude
                         or $File::Find::name !~ $self->cfg->exclude )
@@ -1181,7 +1174,7 @@ sub create_copyright {
 
 sub upsurl {
     my $self = shift;
-    return sprintf( "http://search.cpan.org/dist/%s/", $self->perlname );
+    return sprintf( "https://metacpan.org/release/%s/", $self->perlname );
 }
 
 
@@ -1344,6 +1337,8 @@ sub configure_cpan {
 
     return if $CPAN::Config_loaded;
 
+    my $save_cwd = getcwd();
+
     CPAN::HandleConfig->load( be_silent => not $self->cfg->verbose )
         if $self->cfg->network;
 
@@ -1356,6 +1351,8 @@ sub configure_cpan {
 
     $CPAN::Config->{build_requires_install_policy} = 'no';
     $CPAN::Config->{prerequisites_policy} = 'ignore';
+
+    chdir $save_cwd;
 }
 
 =item discover_dependencies
@@ -1415,6 +1412,11 @@ The following special cases are detected:
 If L<Module::AutoInstall> is discovered in L<inc/>, debhelper dependency is
 raised to 7.2.13.
 
+=item Module::Build::Tiny
+
+if L<Module::Build::Tiny> is present in the build-dependencies, debhelper
+dependency is raised to 9.20130630.
+
 =item dh --with=quilt
 
 C<dh --with=quilt> needs debhelper 7.0.8 and quilt 0.46-7.
@@ -1467,9 +1469,11 @@ sub discover_utility_deps {
     $deps->remove( 'quilt', 'debhelper' );
 
     # start with the minimum
-    $deps->add( Debian::Dependency->new( 'debhelper', $self->cfg->dh ) );
+    my $debhelper_version = $self->cfg->dh;
+    $debhelper_version = '9.20120312' if $debhelper_version eq '9';
+    $deps->add( Debian::Dependency->new( 'debhelper', $debhelper_version ) );
 
-    if ( $control->binary->Values(0)->Architecture eq 'all' ) {
+    if ( $control->binary_tie->Values(0)->Architecture eq 'all' ) {
         $control->source->Build_Depends_Indep->add('perl');
     }
     else {
@@ -1479,6 +1483,9 @@ sub discover_utility_deps {
     $self->explained_dependency( 'Module::AutoInstall', $deps,
         'debhelper (>= 7.2.13)' )
         if -e catfile( $self->main_dir, qw( inc Module AutoInstall.pm ) );
+    $self->explained_dependency( 'Module::Build::Tiny', $deps,
+        'debhelper (>= 9.20130630)' )
+        if $deps->has('libmodule-build-tiny-perl');
 
     for ( @{ $self->rules->lines } ) {
         $self->explained_dependency( 'dh --with', $deps,
@@ -1533,7 +1540,7 @@ sub discover_utility_deps {
     # there are old packages that still build-depend on libmodule-build-perl
     # or perl (>= 5.10) | libmodule-build-perl.
     # Since M::B is part of perl 5.10, the build-dependency needs correction
-    # and we replace this Build-Depends with simply perl, as lenny has the 
+    # and we replace this Build-Depends with simply perl, as lenny has the
     # required version.
     # Remove perl from Build-Depends-Indep as then perl will be already in
     # Build-Depends.
@@ -1546,9 +1553,9 @@ sub discover_utility_deps {
     }
 
     # some mandatory dependencies
-    my $bin_deps = $control->binary->Values(0)->Depends;
+    my $bin_deps = $control->binary_tie->Values(0)->Depends;
     $bin_deps += '${shlibs:Depends}'
-        if $self->control->binary->Values(0)->Architecture eq 'any';
+        if $self->control->binary_tie->Values(0)->Architecture eq 'any';
     $bin_deps += '${misc:Depends}, ${perl:Depends}';
 }
 
@@ -1597,6 +1604,24 @@ sub backup_file {
     }
 }
 
+=item unquote(I<string>)
+
+Runs its argument through L<Text::Balanced>'s C<extract_quotelike> method and
+returns the extracted content with quotes removed. Dies if C<extract_quotelike>
+can't find quoted string.
+
+=cut
+
+sub unquote {
+    my ( $self, $input ) = @_;
+
+    my $unquoted = (extract_quotelike($input))[5];
+
+    die "Unable to find quoted string in [$input]" unless defined $unquoted;
+
+    return $unquoted;
+}
+
 =back
 
 =cut
@@ -1631,9 +1656,9 @@ sub _file_w {
 
 =item Copyright (C) 2006 Frank Lichtenheld <djpig@debian.org>
 
-=item Copyright (C) 2007-2011 Gregor Herrmann <gregoa@debian.org>
+=item Copyright (C) 2007-2013 Gregor Herrmann <gregoa@debian.org>
 
-=item Copyright (C) 2007,2008,2009,2010,2012 Damyan Ivanov <dmn@debian.org>
+=item Copyright (C) 2007,2008,2009,2010,2012,2013 Damyan Ivanov <dmn@debian.org>
 
 =item Copyright (C) 2008, Roberto C. Sanchez <roberto@connexer.com>
 
