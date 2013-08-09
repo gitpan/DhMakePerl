@@ -33,53 +33,76 @@ no_index:
 provides:
   Debian::AptContents:
     file: lib/Debian/AptContents.pm
+    version: 0.77
   Debian::Control:
     file: lib/Debian/Control.pm
+    version: 0.77
   Debian::Control::FromCPAN:
     file: lib/Debian/Control/FromCPAN.pm
+    version: 0.77
   Debian::Control::Stanza:
     file: lib/Debian/Control/Stanza.pm
+    version: 0.71
   Debian::Control::Stanza::Binary:
     file: lib/Debian/Control/Stanza/Binary.pm
+    version: 0.77
   Debian::Control::Stanza::CommaSeparated:
     file: lib/Debian/Control/Stanza/CommaSeparated.pm
+    version: 0.66
   Debian::Control::Stanza::Source:
     file: lib/Debian/Control/Stanza/Source.pm
+    version: 0.73
   Debian::Dependencies:
     file: lib/Debian/Dependencies.pm
+    version: 0.67
   Debian::Dependency:
     file: lib/Debian/Dependency.pm
+    version: 0.77
   Debian::DpkgLists:
     file: lib/Debian/DpkgLists.pm
+    version: 0.71
   Debian::Rules:
     file: lib/Debian/Rules.pm
+    version: 0.66
   Debian::WNPP::Bug:
     file: lib/Debian/WNPP/Bug.pm
+    version: 0.64
   Debian::WNPP::Query:
     file: lib/Debian/WNPP/Query.pm
+    version: 0.74
   DhMakePerl:
     file: lib/DhMakePerl.pm
-    version: 0.77
+    version: 0.78
   DhMakePerl::Command::Packaging:
     file: lib/DhMakePerl/Command/Packaging.pm
+    version: 0.77
   DhMakePerl::Command::dump_config:
     file: lib/DhMakePerl/Command/dump_config.pm
+    version: 0.65
   DhMakePerl::Command::help:
     file: lib/DhMakePerl/Command/help.pm
+    version: 0.65
   DhMakePerl::Command::locate:
     file: lib/DhMakePerl/Command/locate.pm
+    version: 0.66
   DhMakePerl::Command::make:
     file: lib/DhMakePerl/Command/make.pm
+    version: 0.77
   DhMakePerl::Command::refresh:
     file: lib/DhMakePerl/Command/refresh.pm
+    version: 0.77
   DhMakePerl::Command::refresh_cache:
     file: lib/DhMakePerl/Command/refresh_cache.pm
+    version: 0.65
   DhMakePerl::Config:
     file: lib/DhMakePerl/Config.pm
+    version: 0.77
   DhMakePerl::PodParser:
     file: lib/DhMakePerl/PodParser.pm
+    version: 0.51
   DhMakePerl::Utils:
     file: lib/DhMakePerl/Utils.pm
+    version: 0.71
 recommends:
   Git: 0
   IO::Dir: 0
@@ -126,4 +149,4 @@ requires:
 resources:
   license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
   repository: http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git
-version: 0.77
+version: 0.78

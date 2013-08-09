@@ -43,6 +43,7 @@ t/contents/test_debian_dists_testing_main_Contents
 t/Control.t
 t/core-modules.t
 t/corelist.t
+t/critic.t
 t/debian-version.t
 t/Dep.t
 t/Dependencies.t
@@ -129,6 +130,7 @@ t/makefiles/module-install-autodie.PL
 t/manifest.t
 t/perl-deps.t
 t/perl-versions.t
+t/perlcriticrc
 t/pod-coverage.t
 t/pod.t
 t/rules.t

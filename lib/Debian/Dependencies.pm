@@ -3,6 +3,8 @@ package Debian::Dependencies;
 use strict;
 use warnings;
 
+our $VERSION = '0.67';
+
 use AptPkg::Config;
 use Debian::Dependency;
 
@@ -33,7 +35,7 @@ Debian::Dependencies - a list of Debian::Dependency objects
 
     print Debian::Dependencies->new('perl')
           + Debian::Dependency->new('foo');
-                              # add depeendency to a list
+                              # add dependency to a list
 
 =head1 DESCRIPTION
 
@@ -45,7 +47,7 @@ as arrayrefs, as long as the elements you put in them are instances of the
 L<Debian::Dependency> class.
 
 When used in string context, Debian::Dependencies converts itself into a
-comma-delimitted list of dependencies, suitable for dependency fields of
+comma-delimited list of dependencies, suitable for dependency fields of
 F<debian/control> files.
 
 =head2 CLASS METHODS
@@ -56,7 +58,7 @@ F<debian/control> files.
 
 Constructs a new L<Debian::Dependencies> object. Accepts one scalar argument,
 which is parsed and turned into an arrayref of L<Debian::Dependency> objects.
-Each dependency should be delimitted by a comma and optional space. The exact
+Each dependency should be delimited by a comma and optional space. The exact
 regular expression is C</\s*,\s*/>.
 
 =cut
@@ -249,7 +251,7 @@ sub prune {
 
 =item sort()
 
-Sorts the dependency list by packagee name, version and relation.
+Sorts the dependency list by package name, version and relation.
 
 =cut
 

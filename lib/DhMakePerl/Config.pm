@@ -3,6 +3,8 @@ package DhMakePerl::Config;
 use strict;
 use warnings;
 
+our $VERSION = '0.77';
+
 =head1 NAME
 
 DhMakePerl::Config - dh-make-perl configuration class
@@ -294,7 +296,7 @@ sub dump_config {
 
 =item check_obsolete_entries
 
-Checks for presense of deprecated/obsolete entries and warns/dies if any is
+Checks for presence of deprecated/obsolete entries and warns/dies if any is
 found.
 
 =cut

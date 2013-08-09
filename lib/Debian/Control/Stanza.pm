@@ -23,6 +23,9 @@ package Debian::Control::Stanza;
 require v5.10.0;
 
 use strict;
+use warnings;
+
+our $VERSION = '0.71';
 
 use base qw( Class::Accessor Tie::IxHash );
 
@@ -32,7 +35,7 @@ use Debian::Dependencies;
 
 =head1 FIELDS
 
-Stanza fields are to be defined in the class method I<fields>. Tyically this
+Stanza fields are to be defined in the class method I<fields>. Typically this
 can be done like:
 
     use constant fields => qw( Foo Bar Baz );

@@ -3,6 +3,8 @@ package Debian::WNPP::Bug;
 use strict;
 use warnings;
 
+our $VERSION = '0.64';
+
 =head1 NAME
 
 Debian::WNPP::Bug - handy representation of Debian WNPP bug reports
@@ -97,7 +99,7 @@ The short description of the package
 
 =item submitter
 
-The bug sumbitter in the form C<< Full Name <email@address> >>
+The bug submitter in the form C<< Full Name <email@address> >>
 
 =back
 
@@ -134,7 +136,7 @@ sub type_and_number {
 
 =item as_string
 
-Uset for the "" overload. Returns the bug number.
+Used for the "" overload. Returns the bug number.
 
 =cut
 

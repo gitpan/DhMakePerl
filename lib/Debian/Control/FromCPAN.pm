@@ -14,6 +14,10 @@ Debian::Control::FromCPAN - fill F<debian/control> from unpacked CPAN distributi
 package Debian::Control::FromCPAN;
 
 use strict;
+use warnings;
+
+our $VERSION = '0.77';
+
 use Carp qw(croak);
 
 use base 'Debian::Control';
@@ -50,7 +54,7 @@ The directory where the cpan distribution was unpacked.
 =item intrusive
 
 A flag indicating permission to use L<Module::Depends::Intrusive> for
-discovering dependencies in case L<Module::Depends> fails. Sinse this requires
+discovering dependencies in case L<Module::Depends> fails. Since this requires
 loading all Perl modules in the distribution (and running their BEGIN blocks
 (and the BEGIN blocks of their dependencies, recursively), it is recommended to
 use this only when dealing with trusted sources.
@@ -65,7 +69,7 @@ be found. Otherwise only a warning is issued.
 =item wnpp_query
 
 An instance of L<Debian::WNPP::Query> to be used when checking for WNPP bugs of
-depeended upon packages.
+depended upon packages.
 
 =back
 

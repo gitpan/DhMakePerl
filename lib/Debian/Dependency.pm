@@ -3,6 +3,8 @@ package Debian::Dependency;
 use strict;
 use warnings;
 
+our $VERSION = '0.77';
+
 use AptPkg::Config;
 use Carp;
 use Dpkg::Version ();
@@ -53,7 +55,7 @@ use overload '""' => \&_stringify,
 
 =item new()
 
-Construnct a new instance.
+Construct a new instance.
 
 =item new( { pkg => 'package', rel => '>=', ver => '1.9' } )
 
