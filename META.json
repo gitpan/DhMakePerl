@@ -4,7 +4,7 @@
       "unknown"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4005, CPAN::Meta::Converter version 2.131560",
+   "generated_by" : "Module::Build version 0.4007, CPAN::Meta::Converter version 2.132140",
    "keywords" : [
       "debian",
       "package",
@@ -147,7 +147,7 @@
       },
       "DhMakePerl" : {
          "file" : "lib/DhMakePerl.pm",
-         "version" : "0.78"
+         "version" : "0.79"
       },
       "DhMakePerl::Command::Packaging" : {
          "file" : "lib/DhMakePerl/Command/Packaging.pm",
@@ -199,5 +199,5 @@
          "url" : "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git"
       }
    },
-   "version" : "0.78"
+   "version" : "0.79"
 }

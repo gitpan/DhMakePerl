@@ -14,7 +14,7 @@ build_requires:
 configure_requires:
   Module::Build: 0.38
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4005, CPAN::Meta::Converter version 2.131560'
+generated_by: 'Module::Build version 0.4007, CPAN::Meta::Converter version 2.132140'
 keywords:
   - debian
   - package
@@ -72,7 +72,7 @@ provides:
     version: 0.74
   DhMakePerl:
     file: lib/DhMakePerl.pm
-    version: 0.78
+    version: 0.79
   DhMakePerl::Command::Packaging:
     file: lib/DhMakePerl/Command/Packaging.pm
     version: 0.77
@@ -149,4 +149,4 @@ requires:
 resources:
   license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
   repository: http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git
-version: 0.78
+version: 0.79

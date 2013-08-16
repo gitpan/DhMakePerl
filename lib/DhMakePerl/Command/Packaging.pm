@@ -941,7 +941,7 @@ sub create_copyright {
     my ( $fh, %fields, @res, @incomplete, $year );
     $fh = $self->_file_w($filename);
 
-    # In case author string pawns more than one line, indent them all.
+    # In case author string spawns more than one line, indent them all.
     my $cprt_author = $self->author || '(information incomplete)';
     $cprt_author =~ s/\n/\n    /gs;
     $cprt_author =~ s/^\s*$/    ./gm;
@@ -954,7 +954,7 @@ sub create_copyright {
         'Upstream-Contact' => $cprt_author,
         'Source'           => $self->upsurl
     );
-    for my $key ( keys %fields ) {
+    for my $key ( sort keys %fields ) {
         my $full = "$key";
         if ( $fields{$key} ) {
             push @res, "$full: $fields{$key}";
@@ -1076,21 +1076,21 @@ sub create_copyright {
         # templates (i.e. you must add the author name and some
         # information within the licensing text as such).
         if ( $self->meta->{license} ) {
-            foreach ( @{ $self->meta->{license} }) {
-                given ($_) {
-                    when (/apache_2_0/) { $licenses{'Apache-2.0'} = 1; }
-                    when (/artistic_1/) { $licenses{'Artistic'} = 1; }
-                    when (/artistic_2/) { $licenses{'Artistic-2.0'} = 1; }
-                    # EU::MM and M::B converts the 'gpl' without a version to gpl_1.
-                    # As GPL without a version means *any* GPL, I think it's safe to use GPL-1+ here
-                    when (/gpl_1/) { $licenses{'GPL-1+'} = 1; }
+            foreach ( @{ $self->meta->{license} } ) {
+                if (/apache_2_0/) { $licenses{'Apache-2.0'}   = 1; next; }
+                if (/artistic_1/) { $licenses{'Artistic'}     = 1; next; }
+                if (/artistic_2/) { $licenses{'Artistic-2.0'} = 1; next; }
 
-                    when (/perl_5/) {
-                       $licenses{'GPL-1+'}   = 1;
-                       $licenses{'Artistic'} = 1;
-                    }
+                # EU::MM and M::B converts the 'gpl' without a version to gpl_1.
+                # As GPL without a version means *any* GPL, I think it's safe to use GPL-1+ here
+                if (/gpl_1/) { $licenses{'GPL-1+'} = 1; next; }
+
+                if (/perl_5/) {
+                    $licenses{'GPL-1+'}   = 1;
+                    $licenses{'Artistic'} = 1;
+                    next;
                 }
-          }
+            }
         }
         else {
             if ( $mangle_cprt =~ /terms\s*as\s*Perl\s*itself/is ) {
@@ -1141,7 +1141,7 @@ sub create_copyright {
             }
         }
 
-        push @res, "License: " . join( ' or ', keys %licenses );
+        push @res, "License: " . join( ' or ', sort keys %licenses );
 
     }
     else {
@@ -1163,10 +1163,10 @@ sub create_copyright {
     else {
         push @res, "Copyright: $year, " . $self->get_developer;
     }
-    push @res, "License: " . join( ' or ', keys %licenses );
+    push @res, "License: " . join( ' or ', sort keys %licenses );
 
     map { $texts{$_} && push( @res, '', "License: $_", $texts{$_} ) }
-        keys %licenses;
+        sort keys %licenses;
 
     $fh->print( join( "\n", @res, '' ) );
     $fh->close;
@@ -1177,7 +1177,7 @@ sub create_copyright {
 
 sub upsurl {
     my $self = shift;
-    return sprintf( "https://metacpan.org/release/%s/", $self->perlname );
+    return sprintf( "https://metacpan.org/release/%s", $self->perlname );
 }
 
 
