@@ -328,15 +328,20 @@ sub find_debs_for_modules {
                 my $alt_dep;
 
                 if ( my @pkgs = Debian::DpkgLists->scan_perl_mod($module) ) {
-                    @pkgs = grep { $_ ne 'perl-modules' } @pkgs;
+                    @pkgs = grep {
+                                ( $_ ne 'perl-modules' )
+                            and ( $_ ne 'perl-base' )
+                            and ( $_ ne 'perl' )
+                    } @pkgs;
 
                     $alt_dep = Debian::Dependency->new(
                           ( @pkgs > 1 )
                         ? [ map { { pkg => $_, ver => $version } } @pkgs ]
                         : ( $pkgs[0], $version )
-                    );
+                    ) if @pkgs;
                 }
-                elsif ($apt_contents) {
+
+                if ( not $alt_dep and $apt_contents) {
                     $alt_dep
                         = $apt_contents->find_perl_module_package( $module,
                         $version );
@@ -348,6 +353,7 @@ sub find_debs_for_modules {
                     '>=', $version );
 
                 $dep = Debian::Dependency->new("$alt_dep | $dep");
+                #print "    $dep\n";
             }
         }
         else {

@@ -1,3 +1,53 @@
+0.81 (2014-05-18)
+
+  [ Dima Kogan ]
+  * If unable to parse pkgname or version, quit with a useful error message.
+  * Replaced all 'start_dir' uses with 'main_dir'
+
+  [ gregor herrmann ]
+  * DhMakePerl::Command::Packaging:
+    - install CONTRIBUTING files in extract_docs().
+    - require debhelper 9.20120312 only for arch:any packages;
+      for arch:all debhelper 8 or 9 are enough
+    - add a trailing ~ to all versioned dependencies to make
+      backporting easier
+    - drop special casing for all kinds of dependencies which needed
+      debhelper 7.x.
+      Support for debhelper < 8 was dropped in dh-make-perl 0.77.
+  * Reword "debhelper(1) 7 tiny" to the more accurate "dh(1)".
+    Also rename is_dh7tiny() method to is_dhtiny().
+  * Update copyright years.
+
+  [ Axel Beckert ]
+  * Apply wrap-and-sort.
+  * Untangle checks for pristine-tar and upstream tarball in
+    git_add_debian() (Closes: #735968)
+  * Code-deduplication by splitting up guess_tarball() into
+    guess_tarball($prefix) and guess_debian_tarball() and then using
+    guess_tarball() also in setup_dir().
+  * Iterate over all supported tar ball suffixes in guess_tarball().
+  * Use Cwd's realpath for upstream tarball search if main_dir is just "."
+
+  [ gregor herrmann ]
+  * Bump required debhelper version for Module::Build::Tiny to 9.20140227.
+
+0.80 (2013-10-29)
+  [ CSILLAG Tamas ]
+  * add rename_to_debian_package_dir.
+    This will rename the directory name to the canonical name of
+    the debian package.
+  * use system("mv ...") when cross device directory move is expected
+    otherwise just use rename
+
+  [ Damyan Ivanov ]
+  * FromCPAN/find_debs_for_modules: do not crash when all offerred packages
+    are perl(-(modules|base))? (Closes: #725206)
+  * drop trailing slash from t/Control.t test file
+
+  [ Salvatore Bonaccorso ]
+  * Create packages with Standards-Version 3.9.5
+  * Adjust Standards-Version in control files of testsuite
+
 0.79 (2013-08-16)
   * silence a warning when reporting about a core-satisfied dependency without
     a version

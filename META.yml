@@ -3,26 +3,26 @@ abstract: 'create Debian source package from CPAN dist'
 author:
   - unknown
 build_requires:
-  File::DirCompare: 0
-  File::Touch: 0
-  IPC::Run: 0
-  Test::Compile: 0
-  Test::Deep: 0
-  Test::Differences: 0
-  Test::Exception: 0
-  Test::More: 0
+  File::DirCompare: '0'
+  File::Touch: '0'
+  IPC::Run: '0'
+  Test::Compile: '0'
+  Test::Deep: '0'
+  Test::Differences: '0'
+  Test::Exception: '0'
+  Test::More: '0'
 configure_requires:
-  Module::Build: 0.38
+  Module::Build: '0.38'
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4007, CPAN::Meta::Converter version 2.132140'
+generated_by: 'Module::Build version 0.4205, CPAN::Meta::Converter version 2.141170'
 keywords:
   - debian
   - package
   - helper
-license: open_source
+license: gpl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: DhMakePerl
 no_index:
   directory:
@@ -30,123 +30,50 @@ no_index:
     - t
     - xt
     - share
-provides:
-  Debian::AptContents:
-    file: lib/Debian/AptContents.pm
-    version: 0.77
-  Debian::Control:
-    file: lib/Debian/Control.pm
-    version: 0.77
-  Debian::Control::FromCPAN:
-    file: lib/Debian/Control/FromCPAN.pm
-    version: 0.77
-  Debian::Control::Stanza:
-    file: lib/Debian/Control/Stanza.pm
-    version: 0.71
-  Debian::Control::Stanza::Binary:
-    file: lib/Debian/Control/Stanza/Binary.pm
-    version: 0.77
-  Debian::Control::Stanza::CommaSeparated:
-    file: lib/Debian/Control/Stanza/CommaSeparated.pm
-    version: 0.66
-  Debian::Control::Stanza::Source:
-    file: lib/Debian/Control/Stanza/Source.pm
-    version: 0.73
-  Debian::Dependencies:
-    file: lib/Debian/Dependencies.pm
-    version: 0.67
-  Debian::Dependency:
-    file: lib/Debian/Dependency.pm
-    version: 0.77
-  Debian::DpkgLists:
-    file: lib/Debian/DpkgLists.pm
-    version: 0.71
-  Debian::Rules:
-    file: lib/Debian/Rules.pm
-    version: 0.66
-  Debian::WNPP::Bug:
-    file: lib/Debian/WNPP/Bug.pm
-    version: 0.64
-  Debian::WNPP::Query:
-    file: lib/Debian/WNPP/Query.pm
-    version: 0.74
-  DhMakePerl:
-    file: lib/DhMakePerl.pm
-    version: 0.79
-  DhMakePerl::Command::Packaging:
-    file: lib/DhMakePerl/Command/Packaging.pm
-    version: 0.77
-  DhMakePerl::Command::dump_config:
-    file: lib/DhMakePerl/Command/dump_config.pm
-    version: 0.65
-  DhMakePerl::Command::help:
-    file: lib/DhMakePerl/Command/help.pm
-    version: 0.65
-  DhMakePerl::Command::locate:
-    file: lib/DhMakePerl/Command/locate.pm
-    version: 0.66
-  DhMakePerl::Command::make:
-    file: lib/DhMakePerl/Command/make.pm
-    version: 0.77
-  DhMakePerl::Command::refresh:
-    file: lib/DhMakePerl/Command/refresh.pm
-    version: 0.77
-  DhMakePerl::Command::refresh_cache:
-    file: lib/DhMakePerl/Command/refresh_cache.pm
-    version: 0.65
-  DhMakePerl::Config:
-    file: lib/DhMakePerl/Config.pm
-    version: 0.77
-  DhMakePerl::PodParser:
-    file: lib/DhMakePerl/PodParser.pm
-    version: 0.51
-  DhMakePerl::Utils:
-    file: lib/DhMakePerl/Utils.pm
-    version: 0.71
 recommends:
-  Git: 0
-  IO::Dir: 0
+  Git: '0'
+  IO::Dir: '0'
 requires:
-  AptPkg::Cache: 0
-  AptPkg::Config: 0
-  Array::Unique: 0
-  CPAN: 0
-  CPAN::Meta: 0
-  Carp: 0
-  Cwd: 0
-  Dpkg: 0
-  Dpkg::Source::Package: 0
-  Email::Address: 0
-  Email::Date::Format: 0
-  File::Basename: 0
-  File::Copy: 0
-  File::Find::Rule: 0
-  File::Spec: 0
-  File::Spec::Functions: 0
-  File::Which: 0
-  FindBin: 0
-  Getopt::Long: 0
-  IO::File: 0
-  IO::Uncompress::Gunzip: 0
-  List::MoreUtils: 0
-  Module::Build: 0
-  Module::CoreList: 0
-  Module::Depends: 0
-  Module::Depends::Intrusive: 0
-  Parse::DebControl: 0
-  Parse::DebianChangelog: 0
-  Software::License::Artistic_2_0: 0
-  Storable: 0
-  Text::Diff: 0
-  Text::Wrap: 0
-  Tie::File: 0
-  Tie::IxHash: 0
-  User::pwent: 0
-  WWW::Mechanize: 0
-  YAML: 0
-  perl: 5.010
-  version: 0
+  AptPkg::Cache: '0'
+  AptPkg::Config: '0'
+  Array::Unique: '0'
+  CPAN: '0'
+  CPAN::Meta: '0'
+  Carp: '0'
+  Cwd: '0'
+  Dpkg: '0'
+  Dpkg::Source::Package: '0'
+  Email::Address: '0'
+  Email::Date::Format: '0'
+  File::Basename: '0'
+  File::Copy: '0'
+  File::Find::Rule: '0'
+  File::Spec: '0'
+  File::Spec::Functions: '0'
+  File::Which: '0'
+  FindBin: '0'
+  Getopt::Long: '0'
+  IO::File: '0'
+  IO::Uncompress::Gunzip: '0'
+  List::MoreUtils: '0'
+  Module::Build: '0'
+  Module::CoreList: '0'
+  Module::Depends: '0'
+  Module::Depends::Intrusive: '0'
+  Parse::DebControl: '0'
+  Parse::DebianChangelog: '0'
+  Software::License::Artistic_2_0: '0'
+  Storable: '0'
+  Text::Diff: '0'
+  Text::Wrap: '0'
+  Tie::File: '0'
+  Tie::IxHash: '0'
+  User::pwent: '0'
+  WWW::Mechanize: '0'
+  YAML: '0'
+  perl: '5.010'
+  version: '0'
 resources:
   license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
   repository: http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git
-version: 0.79
+version: '0.81'

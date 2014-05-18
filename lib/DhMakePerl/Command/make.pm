@@ -2,7 +2,7 @@ package DhMakePerl::Command::make;
 
 use warnings;
 use strict;
-our $VERSION = '0.77';
+our $VERSION = '0.81';
 use 5.010;    # we use smart matching
 
 use base 'DhMakePerl::Command::Packaging';
@@ -10,7 +10,6 @@ use base 'DhMakePerl::Command::Packaging';
 __PACKAGE__->mk_accessors(
     qw(
         cfg apt_contents main_dir debian_dir meta
-        start_dir
         perlname version pkgversion
         copyright author
         extrasfields  extrapfields
@@ -41,6 +40,7 @@ TO BE FILLED
 
 use AptPkg::Cache ();
 use CPAN ();
+use Cwd qw( realpath );
 use Debian::Dependencies      ();
 use Debian::Dependency        ();
 use Debian::WNPP::Query;
@@ -51,7 +51,7 @@ use Email::Date::Format qw(email_date);
 use File::Basename qw( basename dirname );
 use File::Copy qw( copy move );
 use File::Path ();
-use File::Spec::Functions qw( catfile );
+use File::Spec::Functions qw( catdir catfile updir );
 use Module::Depends            ();
 use Module::Build::ModuleInfo;
 use Text::Wrap qw( wrap );
@@ -82,7 +82,7 @@ sub execute {
 
     $self->extract_basic();
 
-    $tarball //= $self->guess_tarball if $self->cfg->{vcs} eq 'git';
+    $tarball //= $self->guess_debian_tarball if $self->cfg->{vcs} eq 'git';
 
     unless ( defined $self->cfg->version ) {
         $self->pkgversion( $self->version . '-1' );
@@ -247,26 +247,44 @@ sub execute {
     $self->package_already_exists($apt_contents)
         or $self->modules_already_packaged($apt_contents);
 
+    # explicitly call Debian::Rules destroy
+    # this is needed because after the rename the object's
+    # destroy method would update a file on a stale path
+    $self->rules( undef );
+    $self->rename_to_debian_package_dir;
+
     return(0);
+}
+
+sub guess_debian_tarball {
+    my $self = shift;
+
+    my $prefix = catfile( $self->main_dir, '..',
+                          $self->control->source->Source . '_'
+                          . $self->version
+                          . '.orig' );
+    $self->guess_tarball($prefix);
 }
 
 sub guess_tarball {
     my $self = shift;
+    my $prefix = shift;
+    die "guess_tarball(): Needs everything except the file type suffix as parameter"
+        unless defined $prefix;
 
-    my $try = catfile( $self->main_dir, '..',
-              $self->control->source->Source . '_'
-            . $self->version
-            . '.orig.tar.gz' );
+    foreach my $compression_suffix (qw(gz bz2 xz lzma)) {
+        my $try = "$prefix.tar.$compression_suffix";
 
-    print "Trying $try...";
-    if ( -f $try ) {
-        print " found!\n";
-        return $try;
+        print "Trying $try...";
+        if ( -f $try ) {
+            print " found!\n";
+            return $try;
+        }
+        else {
+            print " not found.\n";
+        }
     }
-    else {
-        print " not found.\n";
-        return undef;
-    }
+    return undef;
 }
 
 sub setup_dir {
@@ -330,7 +348,7 @@ sub setup_dir {
 
         # rename existing directory
         if ( -d $new_maindir
-            && system( "mv", "$new_maindir", "$new_maindir.$$" ) == 0 )
+            && rename $new_maindir, "$new_maindir.$$" )
         {
             print '=' x 70, "\n";
             print
@@ -358,20 +376,13 @@ sub setup_dir {
 # 		);
     }
     else {
-        my $maindir = shift(@ARGV) || '.';
+        my $maindir = realpath( shift(@ARGV) || '.' );
         $maindir =~ s/\/$//;
         $self->main_dir($maindir);
-        my $guessed_tarball = catfile( $self->start_dir, "..",
-            basename( $self->start_dir ) . ".tar.gz" );
+        my $guessed_tarball_prefix = catfile( $self->main_dir, "..",
+            basename( $self->main_dir ) );
 
-        print "Trying $guessed_tarball...";
-        if ( -f $guessed_tarball ) {
-            $tarball = $guessed_tarball;
-            print " found.\n";
-        }
-        else {
-            print " not found.\n";
-        }
+        $tarball = $self->guess_tarball($guessed_tarball_prefix);
     }
     return $tarball;
 }
@@ -418,7 +429,7 @@ sub install_package {
     $debname = sprintf( "%s_%s-1_%s.deb", $self->pkgname, $self->version,
         $archspec );
 
-    my $deb = $self->start_dir . "/$debname";
+    my $deb = $self->main_dir . "/$debname";
     system("dpkg -i $deb") == 0
         || die "Cannot install package $deb\n";
 }
@@ -554,6 +565,23 @@ sub search_pkg_perl {
         if $resp->is_success;
 
     return undef;
+}
+
+sub rename_to_debian_package_dir {
+    my( $self ) = @_;
+    return unless $self->cfg->cpan;
+
+    my $maindir = $self->main_dir;
+    my $newmaindir = catdir( $maindir, updir(), $self->pkgname );
+
+    if( -d $newmaindir ) {
+      warn "$newmaindir already exists, skipping rename";
+      return;
+    }
+
+    rename $maindir, $newmaindir or die "rename failed: $self->main_dir to $newmaindir";
+    $self->main_dir( $newmaindir );
+    return;
 }
 
 sub package_already_exists {
@@ -727,10 +755,15 @@ sub git_add_debian {
             $self->pkgname ),
     ) if $self->cfg->pkg_perl;
 
-    if ( File::Which::which('pristine-tar') and $tarball ) {
-        $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
-        system( 'pristine-tar', 'commit', $tarball, "upstream/".$self->version ) >= 0
-            or warn "error running pristine-tar: $!\n";
+    if ( File::Which::which('pristine-tar') ) {
+        if ( $tarball and -f $tarball ) {
+            $ENV{GIT_DIR} = File::Spec->catdir( $self->main_dir, '.git' );
+            system( 'pristine-tar', 'commit', $tarball, "upstream/".$self->version ) >= 0
+                or warn "error running pristine-tar: $!\n";
+        }
+        else {
+            die "No tarball found to handle with pristine-tar. Bailing out."
+        }
     }
     else {
         warn "W: pristine-tar not available. Please run\n";
@@ -805,7 +838,7 @@ L<http://bugs.debian.org/dh-make-perl>
 
 =item Copyright (C) 2006 Frank Lichtenheld <djpig@debian.org>
 
-=item Copyright (C) 2007-2013 Gregor Herrmann <gregoa@debian.org>
+=item Copyright (C) 2007-2014 Gregor Herrmann <gregoa@debian.org>
 
 =item Copyright (C) 2007,2008,2009,2010,2011,2012 Damyan Ivanov <dmn@debian.org>
 

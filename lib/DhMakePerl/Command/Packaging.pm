@@ -3,7 +3,7 @@ package DhMakePerl::Command::Packaging;
 use strict;
 use warnings;
 
-our $VERSION = '0.77';
+our $VERSION = '0.81';
 
 use feature 'switch';
 
@@ -16,7 +16,7 @@ DhMakePerl::Command::Packaging - common routines for 'make' and 'refresh' dh-mak
 use base 'DhMakePerl';
 
 __PACKAGE__->mk_accessors(
-    qw( start_dir main_dir debian_dir
+    qw( main_dir debian_dir
         mod_cpan_version
         meta perlname author
         version rules docs examples copyright
@@ -42,10 +42,9 @@ use Text::Balanced qw(extract_quotelike);
 use Text::Wrap qw(fill);
 use User::pwent;
 
-use constant debstdversion => '3.9.4';
+use constant debstdversion => '3.9.5';
 
 our %DEFAULTS = (
-    start_dir => getcwd(),
 );
 
 sub new {
@@ -354,20 +353,15 @@ sub extract_name_ver {
     $ver = $self->cfg->version
         if $self->cfg->version;
 
+    # final sanitazing of name and version
+    $name =~ s/::/-/g if defined $name;
+    $ver = $self->sanitize_version($ver) if defined $ver && !$self->cfg->version;
+
     defined($ver) and $ver ne ''
         or die "Unable to determine dist version\. Please use --version.\n";
 
-    # final sanitazing of name and version
-    $name =~ s/::/-/g;
-    $ver = $self->sanitize_version($ver) unless $self->cfg->version;
-
-    $name
-        or $ver
-        or die
-        "Unable to determine distribution name and version. Aborting.\n";
-
-    $name or die "Unable to determine distribution name. Aborting.\n";
-    $ver  or die "Unable to determine distribution version. Aborting.\n";
+    defined($name) and $name ne ''
+        or die "Unable to determine dist name\. Please use --packagename.\n";
 
     $self->perlname($name);
     $self->version($ver);
@@ -416,6 +410,7 @@ sub extract_name_ver_from_build {
         $vfrom =~s{::}{/}g;
         $vfrom = "lib/$vfrom.pm";
     }
+    return unless defined $name;
     $name =~ s/,.*$//;
 
     # band aid: need to find a solution also for build in directories
@@ -550,6 +545,7 @@ sub extract_name_ver_from_makefile {
         # Module::Install syntax
         $name = $self->unquote($1);
     }
+    return unless defined $name;
     $name =~ s/,.*$//;
 
     # band aid: need to find a solution also for build in directories
@@ -811,7 +807,7 @@ sub extract_docs {
                     )
                     if (
                         $File::Find::name ne $self->main_dir . '/README'
-                    and /^\b(README|TODO|BUGS|NEWS|ANNOUNCE)\b/i
+                    and /^\b(README|TODO|BUGS|NEWS|ANNOUNCE|CONTRIBUTING)\b/i
                     and !/\.(pod|pm)$/
                     and ( !$self->cfg->exclude
                         or $File::Find::name !~ $self->cfg->exclude )
@@ -862,15 +858,15 @@ sub create_rules {
 
     $self->rules( Debian::Rules->new($file) );
 
-    if ( $self->rules->is_dh7tiny ) {
-        print "$file already uses DH7 tiny rules\n"
+    if ( $self->rules->is_dhtiny ) {
+        print "$file already uses dh tiny rules\n"
             if $self->cfg->verbose;
         return;
     }
 
     $self->backup_file($file);
 
-    my $rulesname = 'rules.dh7.tiny';
+    my $rulesname = 'rules.dh.tiny';
 
     for my $source (
         catfile( $self->cfg->home_dir, $rulesname ),
@@ -1403,52 +1399,26 @@ sub discover_dependencies {
 
 =item discover_utility_deps
 
-Determines whether a certain version of L<debhelper(1)> or L<quilt(1)> is
+Determines whether certain versions of L<debhelper(1)> and other packages are
 needed by the build process.
 
 The following special cases are detected:
 
 =over
 
-=item Module::AutoInstall
-
-If L<Module::AutoInstall> is discovered in L<inc/>, debhelper dependency is
-raised to 7.2.13.
-
 =item Module::Build::Tiny
 
 if L<Module::Build::Tiny> is present in the build-dependencies, debhelper
-dependency is raised to 9.20130630.
+dependency is raised to 9.20140227~.
 
 =item dh --with=quilt
 
-C<dh --with=quilt> needs debhelper 7.0.8 and quilt 0.46-7.
-
-=item dh --with=bash-completion
-
-C<dh --with=bash-completion> needs debhelper 7.0.8 and bash-completion 1:1.0-3.
-
-=item dh --with=perl_dbi
-
-C<dh --with=perl_dbi> needs debhelper 7.0.8 and libdbi-perl 1.612.
-
-=item dh --buildsystem=buildsystem
-
-C<dh --buildsystem=buildsystem> needs debhelper 7.3.7.
+C<dh --with=quilt> needs quilt.
 
 =item quilt.make
 
 If F</usr/share/quilt/quilt.make> is included in F<debian/rules>, a
 build-dependency on C<quilt> is added.
-
-=item debhelper override targets
-
-Targets named C<override_dh_...> are supported by debhelper since 7.0.50
-
-=item Makefile.PL created by Module::Build::Compat
-
-Building such packages requires debhelper 7.0.17 (see
-L<http://bugs.debian.org/496157>) =back
 
 =item Module::Build
 
@@ -1473,71 +1443,41 @@ sub discover_utility_deps {
 
     # start with the minimum
     my $debhelper_version = $self->cfg->dh;
-    $debhelper_version = '9.20120312' if $debhelper_version eq '9';
-    $deps->add( Debian::Dependency->new( 'debhelper', $debhelper_version ) );
 
     if ( $control->binary_tie->Values(0)->Architecture eq 'all' ) {
         $control->source->Build_Depends_Indep->add('perl');
     }
     else {
         $deps->add('perl');
+        $debhelper_version = '9.20120312~' if $debhelper_version eq '9';
     }
+    $deps->add( Debian::Dependency->new( 'debhelper', $debhelper_version ) );
 
-    $self->explained_dependency( 'Module::AutoInstall', $deps,
-        'debhelper (>= 7.2.13)' )
-        if -e catfile( $self->main_dir, qw( inc Module AutoInstall.pm ) );
     $self->explained_dependency( 'Module::Build::Tiny', $deps,
-        'debhelper (>= 9.20130630)' )
+        'debhelper (>= 9.20140227~)' )
         if $deps->has('libmodule-build-tiny-perl');
 
     for ( @{ $self->rules->lines } ) {
-        $self->explained_dependency( 'dh --with', $deps,
-            'debhelper (>= 7.0.8)' )
-            if /dh\s+.*--with/;
-
         $self->explained_dependency(
             'dh --with=quilt',
-            $deps, 'quilt (>= 0.46-7)',
+            $deps, 'quilt',
         ) if /dh\s+.*--with[= ]quilt/;
 
         $self->explained_dependency(
             'dh --with=bash-completion',
             $deps,
-            'bash-completion (>= 1:1.0-3)'
+            'bash-completion'
         ) if (/dh\s+.*--with[= ]bash[-_]completion/);
 
         $self->explained_dependency(
             'dh --with=perl_dbi',
             $deps,
-            'libdbi-perl (>= 1.612)'
+            'libdbi-perl'
         ) if (/dh\s+.*--with[= ]perl[-_]dbi/);
-
-        $self->explained_dependency( 'override_dh_* target',
-            $deps, 'debhelper (>= 7.0.50)' )
-            if /^override_dh_/;
 
         $self->explained_dependency( 'quilt.make', $deps, 'quilt' )
             if m{^include /usr/share/quilt/quilt.make};
 
-        $self->explained_dependency( 'dh* --max-parallel',
-            $deps, 'debhelper (>= 7.4.4)' )
-            if /dh.* --max-parallel/;
-
-        # Modular --buildsystem support for debhelper needs 7.3.7.
-        $self->explained_dependency( 'dh* --buildsystem',
-            $deps, 'debhelper (>= 7.3.7)' )
-            if /dh.* --buildsystem/;
-    }
-
-    if (    -e $self->main_file('Makefile.PL')
-        and -e $self->main_file('Build.PL') )
-    {
-        $self->explained_dependency(
-            'Compatibility Makefile.PL',
-            $deps,
-            'debhelper (>= 7.0.17)',
-            'perl'
-        ) if $self->makefile_pl_is_MBC;
     }
 
     # there are old packages that still build-depend on libmodule-build-perl
@@ -1659,7 +1599,7 @@ sub _file_w {
 
 =item Copyright (C) 2006 Frank Lichtenheld <djpig@debian.org>
 
-=item Copyright (C) 2007-2013 Gregor Herrmann <gregoa@debian.org>
+=item Copyright (C) 2007-2014 Gregor Herrmann <gregoa@debian.org>
 
 =item Copyright (C) 2007,2008,2009,2010,2012,2013 Damyan Ivanov <dmn@debian.org>
 
