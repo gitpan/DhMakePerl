@@ -2,7 +2,7 @@
    "abstract" : "create Debian source package from CPAN dist",
    "author" : [],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4205",
+   "generated_by" : "Module::Build version 0.4206",
    "keywords" : [
       "debian",
       "package",
@@ -96,8 +96,8 @@
          "http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt"
       ],
       "repository" : {
-         "url" : "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/dh-make-perl.git"
+         "url" : "https://anonscm.debian.org/cgit/pkg-perl/packages/dh-make-perl.git"
       }
    },
-   "version" : "0.81"
+   "version" : "0.83"
 }

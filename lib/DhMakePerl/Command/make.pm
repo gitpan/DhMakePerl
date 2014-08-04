@@ -2,7 +2,7 @@ package DhMakePerl::Command::make;
 
 use warnings;
 use strict;
-our $VERSION = '0.81';
+our $VERSION = '0.83';
 use 5.010;    # we use smart matching
 
 use base 'DhMakePerl::Command::Packaging';
@@ -192,7 +192,7 @@ sub execute {
                     $self->pkgname )
             );
             $self->control->source->Vcs_Browser(
-                sprintf( "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/%s.git",
+                sprintf( "https://anonscm.debian.org/cgit/pkg-perl/packages/%s.git",
                     $self->pkgname )
             );
         }
@@ -555,12 +555,12 @@ sub search_pkg_perl {
     $ua->conn_cache( LWP::ConnCache->new );
 
     $resp = $ua->get(
-        "http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/$pkg.git");
+        "https://anonscm.debian.org/cgit/pkg-perl/packages/$pkg.git");
     return { url => $resp->request->uri }
         if $resp->is_success;
 
     $resp = $ua->get(
-        "http://anonscm.debian.org/gitweb/?p=pkg-perl/attic/$pkg.git");
+        "https://anonscm.debian.org/cgit/pkg-perl/attic/$pkg.git");
     return { url => $resp->request->uri }
         if $resp->is_success;
 
@@ -748,7 +748,8 @@ sub git_add_debian {
 
     my $git = Git->repository( $self->main_dir );
     $git->command( 'add', 'debian' );
-    $git->command( 'commit', '-m', 'Initial packaging by dh-make-perl' );
+    $git->command( 'commit', '-m',
+        "Initial packaging by dh-make-perl $VERSION" );
     $git->command(
         qw( remote add origin ),
         sprintf( "ssh://git.debian.org/git/pkg-perl/packages/%s.git",
