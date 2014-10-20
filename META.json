@@ -1,8 +1,10 @@
 {
    "abstract" : "create Debian source package from CPAN dist",
-   "author" : [],
+   "author" : [
+      "unknown"
+   ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4206",
+   "generated_by" : "Module::Build version 0.421",
    "keywords" : [
       "debian",
       "package",
@@ -99,5 +101,5 @@
          "url" : "https://anonscm.debian.org/cgit/pkg-perl/packages/dh-make-perl.git"
       }
    },
-   "version" : "0.83"
+   "version" : "0.84"
 }

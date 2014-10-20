@@ -2,7 +2,7 @@ package DhMakePerl::Command::make;
 
 use warnings;
 use strict;
-our $VERSION = '0.83';
+our $VERSION = '0.84';
 use 5.010;    # we use smart matching
 
 use base 'DhMakePerl::Command::Packaging';
@@ -129,6 +129,8 @@ sub execute {
     my $apt_contents = $self->get_apt_contents;
     my $src = $self->control->source;
 
+    $src->Testsuite('autopkgtest-pkg-perl') if $self->cfg->{pkg_perl};
+
     my @missing = $self->discover_dependencies;
 
     $bin->Depends->add( $self->cfg->depends )
@@ -209,7 +211,7 @@ sub execute {
     $self->create_copyright( $self->debian_file('copyright') );
     $self->update_file_list( docs => $self->docs, examples => $self->examples );
 
-
+    $self->create_upstream_metadata;
 
     if ( $self->cfg->recursive ) {
         $already_done //= {};
